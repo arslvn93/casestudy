@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Case Study Admin</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+    <header>
+        <h1>Case Study Content Editor</h1>
+        <p>Use this page to edit the content of the case study. When you are finished, click the "Generate Config" button at the bottom of the page.</p>
+    </header>
+
+    <main>
+        <form id="config-form">
+            <!-- The form will be dynamically generated here by admin.js -->
+        </form>
+    </main>
+
+    <footer>
+        <div id="output-container" style="display: none;">
+            <h2>Generated Configuration</h2>
+            <p><strong>Instructions:</strong> 1. Click the button to copy all text. 2. Open <code>config.js</code>. 3. Delete all old content. 4. Paste the new content. 5. Save the file.</p>
+            <button id="copy-config-btn">Copy to Clipboard</button>
+            <textarea id="config-output" readonly></textarea>
+        </div>
+        <button id="generate-config-btn">Generate Config</button>
+    </footer>
+
+    <script src="config.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>
