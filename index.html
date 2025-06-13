@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Case Study | iStreet Realty Group</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold: #e3c379;
+      --dark: #181818;
+      --grey: #f8f8f8;
+      --maxwidth: 1100px;
+      --accent: #d9c6a2;
+    }
+    body {
+      font-family: 'Open Sans', Arial, sans-serif;
+      background: #fff;
+      color: #222;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: var(--dark);
+      color: #fff;
+      text-align: center;
+      padding: 2.5rem 1rem 3rem 1rem;
+    }
+    .header-content-wrapper { 
+      max-width: var(--maxwidth);
+      margin: 0 auto;
+      padding-left: 1em; 
+      padding-right: 1em; 
+      box-sizing: border-box; 
+    }
+    .case-study-tag {
+      background: var(--gold);
+      color: #222;
+      display: inline-block;
+      font-size: 0.92rem;
+      font-weight: 700;
+      border-radius: 6px;
+      padding: 0.2em 1.2em;
+      margin-bottom: 1.2em;
+      letter-spacing: 1px;
+    }
+    header h1 {
+      font-family: 'Montserrat', Arial, sans-serif;
+      font-weight: 700;
+      font-size: 2.8rem; 
+      line-height: 1.2; 
+      margin: 0.3em 0 0.7em 0; 
+    }
+    .subheadline {
+      font-size: 1.25rem;
+      margin-bottom: 1.8em;
+      color: var(--gold); /* Use CSS variable */
+      line-height: 1.4;
+    }
+    .subheadline a {
+      color: #fff;
+      text-decoration: underline;
+      font-weight: 600;
+    }
+    .discovery-btn {
+      font-family: 'Montserrat', Arial, sans-serif;
+      font-weight: 700;
+      background: var(--accent); /* Use CSS variable */
+      color: #fff;
+      border: 4px solid #fff;
+      border-radius: 24px;
+      padding: 0.7em 2em;
+      box-shadow: none;
+      cursor: pointer;
+      transition: background 0.14s, color 0.14s, box-shadow 0.12s;
+      white-space: nowrap;
+      outline: none;
+      display: inline-block;
+      text-align: center;
+      font-size: 1.05rem; 
+      margin: 1.3em 0 0 0; 
+    }
+    .discovery-btn:hover {
+      background: var(--gold);
+      color: var(--dark);
+    }
+
+    /* MAIN FLEX CONTAINER FOR SUMMARY + SIDEBAR */
+    .main-box {
+      max-width: var(--maxwidth);
+      margin: -2em auto 0 auto; 
+      display: flex;
+      align-items: stretch;
+      gap: 2.3em;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+      padding: 2.5em; 
+      z-index: 2;
+      position: relative;
+      box-sizing: border-box;
+    }
+    
+    .main-content { flex: 2; min-width: 0; }
+    .sidebar {
+      flex: 1;
+      background: var(--dark);
+      color: #fff;
+      border-radius: 14px;
+      padding: 2.2em 1.2em;
+      box-sizing: border-box;
+      min-width: 250px;
+      max-width: 340px;
+      display: flex;
+      flex-direction: column;
+      align-items: center; 
+      height: 100%;
+      margin-left: auto;
+      box-shadow: 0 4px 12px rgba(40,40,40,0.06);
+    }
+    .sidebar > img { 
+      border-radius: 12px; 
+      width: calc(100% - 1em); 
+      max-width: 280px; 
+      height: auto; 
+      margin: 1em auto 1.5em auto; 
+      display: block; 
+    }
+    .sidebar h3 { 
+      margin-top: 0.2em;
+      font-size: 1.9em; 
+      font-weight: 700;
+      font-family: 'Montserrat', Arial, sans-serif; 
+      margin-bottom: 0.8em; 
+      text-align: center; 
+    }
+    .sidebar p { 
+      font-size: 1em;
+      line-height: 1.5;
+      color: #fff;
+      margin-bottom: 1.2em;
+      text-align: left; 
+      width: 100%; 
+    }
+    .sidebar .contacts { 
+      margin-top: 1.2em;
+      font-size: 1em; 
+      width: 100%;
+      text-align: left; 
+    }
+    .sidebar-agent-block {
+      width: 100%; 
+      margin-bottom: 1em; 
+    }
+    .sidebar-agent-block.has-image {
+      display: flex;
+      align-items: flex-start; 
+      gap: 10px; 
+    }
+    .sidebar-agent-photo {
+      width: 40px; 
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0; 
+    }
+    .sidebar-agent-info {
+      flex-grow: 1; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 2px; 
+      text-align: left;
+    }
+    .sidebar-agent-name { 
+      font-family: 'Montserrat', Arial, sans-serif;
+      font-weight: 600;
+      font-size: 1em; 
+      color: #fff;
+      margin: 0 0 0.15em 0; 
+      line-height: 1.2;
+      text-align: left;
+    }
+    .sidebar .contact-item { 
+      font-size: 0.9em; 
+      display: flex; 
+      align-items: center;
+      gap: 6px; 
+      color: #eee; 
+      line-height: 1.4; 
+      margin: 0; 
+      text-align: left;
+    }
+    .sidebar .contacts svg { 
+      width: 14px; 
+      height: 14px; 
+      fill: var(--gold);
+      flex-shrink: 0; 
+    }
+    .sidebar-agent-divider {
+      border: 0;
+      border-top: 1px solid #444; 
+      margin: 0.8em 0; 
+      width: 100%;
+    }
+    .sidebar strong { 
+      color: #fff;
+    }
+
+    /* Main Content Sections */
+    .main-content img.hero {
+      width: 100%;
+      border-radius: 12px;
+      margin-bottom: 1.7em;
+      object-fit: cover;
+      max-height: 270px;
+    }
+    .main-content h2 { 
+      font-family: 'Montserrat', Arial, sans-serif;
+      font-size: 1.9em; 
+      font-weight: 700;
+      margin: 0.4em 0 0.8em 0;
+      line-height: 1.2; 
+      text-align: center;
+    }
+    .main-content h3 { 
+      font-family: 'Montserrat', Arial, sans-serif;
+      font-size: 1.9em; 
+      font-weight: 700;
+      margin-bottom: 0.5em; 
+      margin-top: 1em; 
+      color: #181818;
+      text-align: left; 
+    }
+    .main-content p { 
+      font-size: 1.15em; 
+      line-height: 1.7; 
+    }
+    .summary-btn { 
+      font-family: 'Montserrat', Arial, sans-serif;
+      font-weight: 700;
+      background: var(--accent); /* Use CSS variable */
+      color: #fff;
+      border: 4px solid #fff;
+      border-radius: 24px;
+      padding: 0.7em 2em;
+      box-shadow: none;
+      cursor: pointer;
+      transition: background 0.14s, color 0.14s, box-shadow 0.12s;
+      white-space: nowrap;
+      outline: none;
+      display: inline-block;
+      text-align: center;
+      font-size: 1.07rem; 
+      margin: 1.2em auto 1.3em auto; 
+    }
+    .summary-btn:hover {
+      background: var(--gold);
+      color: var(--dark);
+    }
+    .section {
+      width: 100%;
+      background: #fff;
+      padding: 0; 
+    }
+    .section-inner {
+      max-width: var(--maxwidth);
+      margin: 0 auto;
+      padding: 2.5em 1em 0 1em; 
+      box-sizing: border-box;
+    }
+    .section-inner.section-with-image { 
+      display: flex;
+      gap: 2.5em; 
+      align-items: flex-start; 
+    }
+    .section-text-content {
+      flex: 1.5; 
+      min-width: 0; 
+    }
+    .section-image-content {
+      flex: 1; 
+      min-width: 0;
+      margin-top: 0.5em; 
+    }
+    .section-image-content img {
+      width: 100%;
+      height: auto;
+      border-radius: 10px; 
+      box-shadow: 0 2px 8px rgba(80,80,80,0.07); 
+      object-fit: cover; 
+      max-height: 300px; 
+    }
+    .section-inner h3 { 
+      font-family: 'Montserrat', Arial, sans-serif;
+      font-size: 1.9em; 
+      font-weight: 700;
+      margin-bottom: 0.5em; 
+      margin-top: 0;
+      color: #181818;
+    }
+    .section-inner p {
+      font-size: 1.15em; 
+      line-height: 1.7; 
+    }
+    .section-inner .testimonial {
+      background: #faf6ee;
+      border-left: 4px solid var(--gold);
+      padding: 1.3em 1.5em;
+      border-radius: 8px;
+      margin: 2em 0 2em 0;
+      font-size: 1.15em; 
+      color: #222;
+      font-style: italic;
+    }
+    .section-inner ul {
+      margin: 1.3em 0;
+      padding-left: 1.5em;
+      font-size: 1.15em; 
+      color: #222;
+    }
+    .section-inner ul li { margin-bottom: 0.8em; } 
+    .section-inner strong { font-weight: 700; }
+    
+    .cta-section {
+      width: 100%;
+      background: var(--dark);
+      color: #fff;
+      text-align: center;
+      margin: 2em auto; 
+      border-radius: 10px;
+      padding: 2em 1em; 
+      font-size: 1.17em;
+      box-shadow: 0 4px 10px rgba(50,40,20,0.04);
+      max-width: var(--maxwidth); 
+      box-sizing: border-box;
+    }
+    .cta-section .discovery-btn { 
+      margin: 1.5em 0 0 0;
+      font-size: 1.15em; 
+    }
+
+    /* Footer Styles */
+    footer {
+      background: var(--dark); 
+      color: #ccc; 
+      padding: 0; 
+      border-top: 1px solid #3a3a3a; 
+    }
+    .footer-top-disclaimer { 
+      text-align: center;
+      color: #999; 
+      font-size: 0.8rem; 
+      line-height: 1.5;
+      padding: 1.5em 1em; 
+      max-width: 750px; 
+      margin: 0 auto; 
+      border-bottom: 1px solid #3a3a3a; 
+      box-sizing: border-box;
+    }
+    .footer-content-grid {
+      display: grid;
+      grid-template-columns: auto 1fr auto; 
+      gap: 2.5em; 
+      align-items: start; 
+      max-width: var(--maxwidth);
+      margin: 0 auto;
+      padding: 2.5em 1em; 
+      box-sizing: border-box;
+    }
+    .footer-column-logos { 
+      display: flex;
+      flex-direction: column;
+      align-items: center; 
+      gap: 1.5em; 
+    }
+    .footer-logo-main, 
+    .footer-logo-secondary { 
+      margin: 0; 
+      max-width: 100px; 
+      height: auto; 
+      display: block;
+    }
+    .footer-logo-secondary-wrapper { 
+      line-height: 0; 
+    }
+    .footer-column-info { 
+      text-align: left; 
+      display: flex;
+      flex-direction: column;
+      gap: 1em; 
+    }
+    .footer-brokerage-info { 
+      font-size: 0.9em; 
+      line-height: 1.5;
+    }
+    .footer-brokerage-info strong {
+      color: #fff; 
+    }
+    .footer-brokerage-info br { 
+        content: "";
+        display: block;
+        margin-bottom: 0.3em;
+    }
+    .footer-column-agents {
+      text-align: left; 
+      font-size: 0.85em; 
+      line-height: 1.5;
+    }
+    .footer-agent-contact-item {
+      margin-bottom: 0.8em; 
+    }
+    .footer-agent-name {
+      font-family: 'Montserrat', Arial, sans-serif;
+      font-weight: 600; 
+      color: #eee; 
+      font-size: 0.95em; 
+      margin: 0 0 0.2em 0;
+    }
+    .footer-agent-detail {
+      font-size: 0.9em; 
+      color: #bbb;
+      margin-bottom: 0.1em;
+      display: flex; 
+      align-items: center;
+      justify-content: flex-start; 
+      gap: 0.5em; 
+    }
+    .footer-agent-detail svg {
+      width: 14px; 
+      height: 14px;
+      fill: var(--gold); 
+    }
+    .footer-bottom-bar {
+      background-color: #111; 
+      color: #777; 
+      font-size: 0.75rem; 
+      padding: 1em; 
+      text-align: center;
+      border-top: 1px solid #2a2a2a; 
+      box-sizing: border-box;
+    }
+    .footer-bottom-bar .copyright-text { 
+      margin-right: 1em; 
+    }
+    .footer-bottom-bar .privacy-policy-link a {
+      color: #999; 
+      text-decoration: none; 
+    }
+    .footer-bottom-bar .privacy-policy-link a:hover {
+      color: var(--gold);
+      text-decoration: underline; 
+    }
+
+    /* CTA Banner Styles */
+    .cta-banner {
+      background: #000;
+      color: #fff;
+      padding: 3em 1em; 
+      margin: 3em auto; 
+      border-radius: 12px;
+      max-width: 95vw; 
+      box-sizing: border-box;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15); 
+    }
+    .cta-banner-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: var(--maxwidth); 
+      margin: 0 auto;
+      gap: 2em;
+      flex-wrap: wrap;
+    }
+    .cta-banner-content > div:first-child { 
+      flex-grow: 1; 
+    }
+    .cta-banner-subhead {
+      font-size: 1.1rem; 
+      font-weight: 400;
+      opacity: 0.88;
+      margin-bottom: 0.5em; 
+      font-family: 'Montserrat', Arial, sans-serif;
+    }
+    .cta-banner-headline {
+      font-size: 2.0rem; 
+      font-family: 'Montserrat', Arial, sans-serif;
+      font-weight: 800;
+      line-height: 1.1; 
+      margin-bottom: 0.5em; 
+    }
+    .cta-banner-small {
+      font-size: 1.0rem; 
+      font-weight: 700;
+      margin-bottom: 0.2em;
+      font-family: 'Montserrat', Arial, sans-serif;
+    }
+    .cta-banner-btn {
+      font-family: 'Montserrat', Arial, sans-serif;
+      font-weight: 700;
+      background: var(--accent); /* Use CSS variable */
+      color: #fff;
+      border: 4px solid #fff;
+      border-radius: 24px;
+      padding: 0.7em 2em;
+      box-shadow: none;
+      cursor: pointer;
+      transition: background 0.14s, color 0.14s, box-shadow 0.12s;
+      white-space: nowrap;
+      outline: none;
+      display: inline-block;
+      text-align: center;
+      font-size: 1.1rem; 
+      margin-left: 2em; 
+    }
+    .cta-banner-btn:hover {
+      background: var(--gold); 
+      color: var(--dark); 
+    }
+    
+    /* General Media Queries */
+    @media (max-width: 1100px) { 
+      .main-box { padding: 2em 1em; } 
+      .cta-banner-headline { font-size: 1.8rem; } 
+      .cta-banner-subhead { font-size: 1.0rem; } 
+      .cta-banner-small { font-size: 0.9rem; } 
+      .cta-banner-btn { font-size: 1.0rem; } 
+    }
+    @media (max-width: 900px) { 
+      .main-box { flex-direction: column; padding: 1.5em 1em; } 
+      .sidebar { 
+        max-width: 100%; 
+        margin-top: 2em; 
+        height: auto;
+        padding: 1.5em; /* Sidebar padding for tablet */
+      } 
+      .sidebar > img { max-width: 180px; }
+      .sidebar h3 { font-size: 1.6em; }
+      .sidebar p { font-size: 0.95em; line-height: 1.6; }
+      .sidebar .contacts { font-size: 0.95em; }
+
+      .footer-content-grid {
+        grid-template-columns: 1fr; 
+        text-align: center; 
+        gap: 2em; 
+        padding: 2em 1em; 
+      }
+      .footer-column-logos, .footer-column-info, .footer-column-agents {
+        align-items: center; 
+        text-align: center; 
+      }
+      .footer-logo-main, .footer-logo-secondary-wrapper img { 
+        margin: 0 auto; 
+      }
+      .footer-column-agents {
+        margin-top: 1em; 
+      }
+      .footer-agent-detail {
+        justify-content: center; 
+      }
+      .footer-bottom-bar {
+        padding: 1em;
+      }
+      .footer-bottom-bar .copyright-text,
+      .footer-bottom-bar .privacy-policy-link {
+        display: block; 
+        margin-right: 0;
+        margin-bottom: 0.5em;
+      }
+      .footer-bottom-bar .privacy-policy-link {
+        margin-bottom: 0;
+      }
+    }
+    @media (max-width: 800px) { 
+      .cta-banner-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5em; 
+      }
+      .cta-banner-btn {
+        margin-left: 0;
+        width: 100%;
+        text-align: center;
+        padding: 0.6em 1.5em; 
+      }
+      .cta-banner-headline {
+        font-size: 1.6rem; 
+        text-align: left;
+      }
+      .cta-banner-subhead, .cta-banner-small {
+        font-size: 0.9rem; 
+        text-align: left;
+      }
+    }
+    @media (max-width: 700px) { 
+      .header-content-wrapper { padding-left: 0.5em; padding-right: 0.5em; }
+      .main-box { padding: 1em 0.5em; } 
+      .main-content, .sidebar { min-width: 0; padding: 1em;} /* Consistent sidebar padding */
+      .main-content h2 { font-size: 1.6em; } 
+      .main-content h3 { font-size: 1.6em; } 
+      .main-content p { font-size: 1em; line-height: 1.6; } 
+      .section-inner { padding: 2em 1em 0 1em;} 
+      .section-inner h3 { font-size: 1.6em; } 
+      .section-inner p { font-size: 1em; line-height: 1.6; } 
+      .section-inner.section-with-image {
+        flex-direction: column; 
+        gap: 1.5em;
+      }
+      .section-inner.section-with-image .section-image-content {
+        margin-top: 1em; 
+        order: -1; 
+      }
+      .sidebar { padding: 1em; } /* Sidebar padding for small mobile */
+      .sidebar > img { max-width: 120px; }
+      .sidebar h3 { font-size: 1.4em; }
+      .sidebar p { font-size: 0.9em; line-height: 1.6; }
+      .sidebar .contacts { font-size: 0.9em; }
+      .sidebar-agent-photo { width: 35px; height: 35px; }
+      .sidebar .contacts svg { width: 12px; height: 12px; }
+
+
+      .cta-banner { padding: 2em 1em; }
+      .footer-top-disclaimer { font-size: 0.7rem; padding: 1em; margin-bottom: 1em;}
+      .footer-content-grid { gap: 1.5em; padding: 1.5em 1em; }
+      .footer-logo-main, .footer-logo-secondary { max-width: 80px; }
+      .footer-brokerage-info { font-size: 0.8em; }
+      .footer-column-agents { font-size: 0.75em; }
+      .footer-bottom-bar { font-size: 0.7rem; }
+    }
+    /* Optional: subtle divider */
+    .divider {
+      width: 100%;
+      max-width: var(--maxwidth);
+      margin: 2em auto 0 auto;
+      border-bottom: 1px solid #f1ede6;
+    }
+  </style>
+</head>
+<body>
+  <header id="dynamic-header">
+    <!-- Content will be dynamically injected by renderer.js -->
+  </header>
+  <!-- Main Box: summary and sidebar only -->
+  <div class="main-box">
+    <section class="main-content" id="dynamic-main-content">
+      <!-- Content will be dynamically injected by renderer.js -->
+    </section>
+    <aside class="sidebar" id="dynamic-sidebar">
+      <!-- Content will be dynamically injected by renderer.js -->
+    </aside>
+  </div>
+
+  <!-- No shadow/box, just seamless sections below -->
+  <div id="dynamic-sections-container">
+    <!-- Sections will be dynamically injected here by renderer.js -->
+  </div>
+  <footer id="dynamic-footer">
+    <!-- Content will be dynamically injected by renderer.js -->
+  </footer>
+  <script src="config.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>
