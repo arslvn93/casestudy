@@ -65,12 +65,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const colorInput = document.createElement('input');
             colorInput.type = 'color';
             colorInput.value = value;
-            colorInput.dataset.path = path;
             colorContainer.appendChild(colorInput);
             const textInput = document.createElement('input');
             textInput.type = 'text';
             textInput.value = value;
-            textInput.dataset.path = path;
+            textInput.dataset.path = path; // The text input holds the value
             colorInput.addEventListener('input', () => textInput.value = colorInput.value);
             textInput.addEventListener('input', () => colorInput.value = textInput.value);
             colorContainer.appendChild(textInput);
@@ -101,22 +100,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const typeTitleRow = sectionFieldset.querySelector('.type-title-row');
         const fieldsToRemove = Array.from(sectionFieldset.children).filter(child => child !== typeTitleRow);
         fieldsToRemove.forEach(el => el.remove());
+        
+        const pathPrefix = selectElement.dataset.path.substring(0, selectElement.dataset.path.lastIndexOf('.'));
+
         if (newType === 'standard') {
             if (!typeTitleRow.querySelector('[data-key="title"]')) {
-                const titleElement = createFormElement('title', 'New Section', selectElement.dataset.path.replace('type', 'title'));
+                const titleElement = createFormElement('title', 'New Section', `${pathPrefix}.title`);
                 titleElement.classList.add('col-3-4');
                 typeTitleRow.appendChild(titleElement);
             }
-            buildStandardSectionFields(sectionFieldset, {}, selectElement.dataset.path);
+            buildStandardSectionFields(sectionFieldset, {}, pathPrefix);
         } else if (newType === 'ctaBanner') {
             const titleElement = typeTitleRow.querySelector('[data-key="title"]');
             if (titleElement) titleElement.remove();
-            buildCtaBannerSectionFields(sectionFieldset, {}, selectElement.dataset.path);
+            buildCtaBannerSectionFields(sectionFieldset, {}, pathPrefix);
         }
     }
 
     function buildStandardSectionFields(fieldset, data, pathPrefix) {
-        fieldset.appendChild(createFormElement('paragraphs', data.paragraphs || [''], `${pathPrefix.replace('type', 'paragraphs')}`));
+        fieldset.appendChild(createFormElement('paragraphs', data.paragraphs || [''], `${pathPrefix}.paragraphs`));
         const optionalControlsContainer = document.createElement('div');
         optionalControlsContainer.className = 'optional-controls-row';
         const testimonialContainer = document.createElement('div');
@@ -131,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function buildCtaBannerSectionFields(fieldset, data, pathPrefix) {
-        fieldset.appendChild(createFormElement('ctaBannerContent', data.ctaBannerContent || { subhead: '', headline: '', smallText: '' }, `${pathPrefix.replace('type', 'ctaBannerContent')}`));
+        fieldset.appendChild(createFormElement('ctaBannerContent', data.ctaBannerContent || { subhead: '', headline: '', smallText: '' }, `${pathPrefix}.ctaBannerContent`));
     }
 
     function buildObjectEditor(obj, isNested = false, path) {
@@ -147,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateOptionalButton(container, key, data, addFunction, pathPrefix) {
         container.innerHTML = '';
-        const newPath = pathPrefix.replace('type', key);
+        const newPath = `${pathPrefix}.${key}`;
         if (data) {
             const fields = createFormElement(key, data, newPath);
             container.appendChild(fields);
@@ -196,7 +198,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isStringArray) {
                 listContainer.appendChild(createStringArrayItem('', newPath));
             } else {
-                const newItemData = arr.length > 0 ? JSON.parse(JSON.stringify(arr[0])) : {};
+                let newItemData = {};
+                if (key === 'sections') newItemData = { type: 'standard', title: 'New Section', paragraphs: [''] };
+                else if (key === 'agents') newItemData = { name: '', imageSrc: '', contactDetails: [{type: 'email', value: ''}] };
+                else if (key === 'contactDetails') newItemData = { type: 'email', value: '' };
+                else if (arr.length > 0) newItemData = JSON.parse(JSON.stringify(arr[0]));
+                
                 Object.keys(newItemData).forEach(k => {
                     if (Array.isArray(newItemData[k])) newItemData[k] = [];
                     else if (typeof newItemData[k] === 'object' && newItemData[k] !== null) Object.keys(newItemData[k]).forEach(subKey => newItemData[k][subKey] = '');
@@ -295,6 +302,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (input.type === 'number') value = parseFloat(value);
             setValue(newConfig, path, value);
         });
+
+        // Merge githubConfig if it exists
+        if (window.githubConfig && window.githubConfig.repoName) {
+            newConfig.githubRepo = window.githubConfig.repoName;
+        }
 
         try {
             const response = await fetch('https://n8n.salesgenius.co/webhook/casestudyupdate', {
