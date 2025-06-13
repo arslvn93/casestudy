@@ -20,13 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Helper function to get a value from globals, supporting dot notation for nested properties
   function getGlobal(path) {
     if (!path) return '';
-    if (path.startsWith('globals.')) {
-        return path.split('.').slice(1).reduce((obj, key) => {
-            if (obj && typeof obj === 'object' && key in obj) return obj[key];
-            if (Array.isArray(obj) && !isNaN(parseInt(key))) return obj[parseInt(key)];
-            return undefined;
-        }, globals);
-    }
+    // This simplified version assumes path is a direct key in globals.
+    // The more complex reduce logic can be added back if needed for deep nesting like 'globals.agents.0.name'
     return globals[path] || '';
   }
 
@@ -34,15 +29,14 @@ document.addEventListener('DOMContentLoaded', () => {
   function processTemplateString(templateStr, dataObject = globals) {
     if (typeof templateStr !== 'string') return templateStr;
     return templateStr.replace(/\{\{(.*?)\}\}/g, (match, key) => {
-      // Resolve keys, trying dataObject first, then globals, then footer (for specific footer template cases)
       let value;
-      if (dataObject && key.split('.').reduce((obj, k) => (obj && obj[k] !== undefined) ? obj[k] : undefined, dataObject) !== undefined) {
-        value = key.split('.').reduce((obj, k) => obj && obj[k], dataObject);
-      } else if (globals && key.split('.').reduce((obj, k) => (obj && obj[k] !== undefined) ? obj[k] : undefined, globals) !== undefined) {
-        value = key.split('.').reduce((obj, k) => obj && obj[k], globals);
-      } else if (footer && key.split('.').reduce((obj, k) => (obj && obj[k] !== undefined) ? obj[k] : undefined, footer) !== undefined) {
-         // Special case for footer templates like {{brokerageName}}
-        value = key.split('.').reduce((obj, k) => obj && obj[k], footer);
+      // Simplified lookup
+      if (dataObject && dataObject.hasOwnProperty(key)) {
+        value = dataObject[key];
+      } else if (globals && globals.hasOwnProperty(key)) {
+        value = globals[key];
+      } else if (footer && footer.hasOwnProperty(key)) {
+        value = footer[key];
       }
       return value !== undefined ? value : match;
     });
@@ -57,20 +51,22 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     let subheadlineHTML = processTemplateString(headerData.subheadline || '');
+    const ctaButtonURL = getGlobal('mainCTAButtonURL') || '#';
 
     headerElement.innerHTML = `
       <div class="header-content-wrapper">
         <div class="case-study-tag">${processTemplateString(headerData.tag || '')}</div>
         <h1>${processTemplateString(headerData.title || '')}</h1>
         <div class="subheadline">${subheadlineHTML}</div>
+        <a href="${ctaButtonURL}" class="discovery-btn-link"><button class="discovery-btn">${getGlobal('mainCTAButtonText') || 'Book A Discovery Call'}</button></a>
       </div>
-      <button class="discovery-btn">${getGlobal('mainCTAButtonText') || 'Book A Discovery Call'}</button>
     `;
   }
 
   function renderMainBox(mainBoxData) {
     const summaryContainer = document.getElementById('dynamic-main-content');
     const sidebarContainer = document.getElementById('dynamic-sidebar');
+    const ctaButtonURL = getGlobal('mainCTAButtonURL') || '#';
 
     if (summaryContainer && mainBoxData.summary) {
       const summary = mainBoxData.summary;
@@ -78,9 +74,9 @@ document.addEventListener('DOMContentLoaded', () => {
       summaryContainer.innerHTML = `
         <h2>${processTemplateString(summary.title || '')}</h2>
         ${summary.heroImage ? `<img class="hero" src="${summary.heroImage.src}" alt="${heroAltText}">` : ''}
-        <h2>${processTemplateString(summary.subTitle || '')}</h2>
+        ${summary.subTitle ? `<h2>${processTemplateString(summary.subTitle)}</h2>` : ''}
         ${(summary.paragraphs || []).map(p => `<p>${processTemplateString(p)}</p>`).join('')}
-        <button class="summary-btn">${getGlobal('mainCTAButtonText') || 'Book A Discovery Call'}</button>
+        <a href="${ctaButtonURL}" class="summary-btn-link"><button class="summary-btn">${getGlobal('mainCTAButtonText') || 'Book A Discovery Call'}</button></a>
       `;
     } else if (!summaryContainer) {
         console.error('Element with ID "dynamic-main-content" not found.');
@@ -90,16 +86,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (sidebarContainer && mainBoxData.sidebar) {
       const sidebar = mainBoxData.sidebar;
       let contactsHTML = '';
-      // Iterate over all agents in globals.agents
       if (globals.agents && Array.isArray(globals.agents)) {
-        globals.agents.forEach((agent, agentIndex) => { // Added agentIndex
+        globals.agents.forEach((agent, agentIndex) => {
           if (agent && agent.name && agent.contactDetails && Array.isArray(agent.contactDetails)) {
             let agentBlockHTML = '';
             if (agent.imageSrc) {
               agentBlockHTML += `<img src="${agent.imageSrc}" alt="${processTemplateString(agent.name)}" class="sidebar-agent-photo">`;
             }
             
-            let agentDetailsHTML = `<div class="sidebar-agent-info">`; // Wrapper for name and contacts
+            let agentDetailsHTML = `<div class="sidebar-agent-info">`;
             agentDetailsHTML += `<h4 class="sidebar-agent-name">${processTemplateString(agent.name)}</h4>`;
             
             agent.contactDetails.forEach(detail => {
@@ -111,9 +106,8 @@ document.addEventListener('DOMContentLoaded', () => {
               }
               agentDetailsHTML += `<div class="contact-item">${iconSvg}${processTemplateString(detail.value)}</div>`;
             });
-            agentDetailsHTML += `</div>`; // End sidebar-agent-info
+            agentDetailsHTML += `</div>`;
 
-            // If image exists, wrap image and details in a flex container
             if (agent.imageSrc) {
               contactsHTML += `<div class="sidebar-agent-block has-image">${agentBlockHTML}${agentDetailsHTML}</div>`;
             } else {
@@ -128,9 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const sidebarImageAlt = sidebar.image && sidebar.image.alt ? processTemplateString(sidebar.image.alt) : '';
-      // Construct sidebar title: "About [CompanyName]"
       const companyNameForSidebar = getGlobal('companyName');
-      const sidebarTitle = companyNameForSidebar ? `About ${companyNameForSidebar}` : 'About Us'; // Default if companyName is not found
+      const sidebarTitle = sidebar.title ? processTemplateString(sidebar.title) : (companyNameForSidebar ? `About ${companyNameForSidebar}` : 'About Us');
 
       sidebarContainer.innerHTML = `
         <h3>${sidebarTitle}</h3>
@@ -149,42 +142,28 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Element with ID "dynamic-sections-container" not found.');
       return;
     }
+    const ctaButtonURL = getGlobal('mainCTAButtonURL') || '#';
 
     sectionsArray.forEach(sectionData => {
       let sectionHTML = '';
-      // Default classes for standard sections
-      let sectionClass = 'section-inner';
       let outerDivClass = 'section';
-      let contentHTML = '';
 
       if (sectionData.type === 'ctaBanner' && sectionData.ctaBannerContent) {
         const bannerContent = sectionData.ctaBannerContent;
-        // For ctaBanner, the outer div is the banner itself, and content is structured inside
-        outerDivClass = 'cta-banner'; // This will be the main container for this section type
-        contentHTML = `
-          <div class="cta-banner-content">
-            <div>
-              <div class="cta-banner-subhead">${processTemplateString(bannerContent.subhead || '')}</div>
-              <div class="cta-banner-headline">${processTemplateString(bannerContent.headline || '')}</div>
-              <div class="cta-banner-small">${processTemplateString(bannerContent.smallText || '')}</div>
+        outerDivClass = 'cta-banner';
+        sectionHTML = `
+          <div class="${outerDivClass}">
+            <div class="cta-banner-content">
+              <div>
+                <div class="cta-banner-subhead">${processTemplateString(bannerContent.subhead || '')}</div>
+                <div class="cta-banner-headline">${processTemplateString(bannerContent.headline || '')}</div>
+                <div class="cta-banner-small">${processTemplateString(bannerContent.smallText || '')}</div>
+              </div>
+              <a href="${ctaButtonURL}" class="cta-banner-btn-link"><button class="cta-banner-btn">${getGlobal('mainCTAButtonText') || 'Book A Discovery Call'}</button></a>
             </div>
-            <button class="cta-banner-btn">${getGlobal('mainCTAButtonText') || 'Book A Discovery Call'}</button>
           </div>
         `;
-        sectionHTML = `<div class="${outerDivClass}">${contentHTML}</div>`;
-      } else if (sectionData.type === 'cta') {
-        // Correctly render the CTA section using headline, subheadline, and button from config
-        contentHTML = `
-          <h3>${processTemplateString(sectionData.headline || '', sectionData)}</h3>
-          <p>${processTemplateString(sectionData.subheadline || '', sectionData)}</p>
-          <button class="discovery-btn" onclick="location.href='${processTemplateString(sectionData.button.link || '#', sectionData.button)}';">
-            ${processTemplateString(sectionData.button.text || getGlobal('mainCTAButtonText') || 'Book A Discovery Call', sectionData.button)}
-          </button>
-        `;
-        // The 'cta-section' class handles its own styling including background and max-width.
-        // No need for an outer 'section cta-hosting-section' div.
-        sectionHTML = `<div class="cta-section">${contentHTML}</div>`;
-      } else { // Standard section rendering
+      } else if (sectionData.type === 'standard') {
         const imageAlt = sectionData.image && sectionData.image.alt ? processTemplateString(sectionData.image.alt) : '';
         const imageHtml = sectionData.image ? `<div class="section-image-content"><img src="${sectionData.image.src}" alt="${imageAlt}"></div>` : '';
         
@@ -192,22 +171,13 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="section-text-content">
             ${sectionData.title ? `<h3>${processTemplateString(sectionData.title)}</h3>` : ''}
             ${(sectionData.paragraphs || []).map(p => `<p>${processTemplateString(p)}</p>`).join('')}
-            ${sectionData.listItems ? `<ul>${sectionData.listItems.map(li => `<li>${processTemplateString(li)}</li>`).join('')}</ul>` : ''}
+            ${sectionData.listItems ? `<p class="list-paragraph">${sectionData.listItems.map(li => processTemplateString(li)).join(' ')}</p>` : ''}
             ${sectionData.testimonial ? `<div class="testimonial">${processTemplateString(sectionData.testimonial.quote)}</div>` : ''}
           </div>
         `;
 
-        if (sectionData.image) {
-          // If there's an image, section-inner becomes a flex container
-          // Order for desktop: text then image. CSS will handle order for mobile if needed.
-          contentHTML = `${textContentHtml}${imageHtml}`;
-        } else {
-          contentHTML = textContentHtml; // Only text content
-        }
-        
-        // sectionClass is 'section-inner'. It will need display:flex if image is present.
-        // Add a conditional class if an image exists to trigger flex/grid display via CSS.
-        const innerSectionClass = sectionData.image ? `${sectionClass} section-with-image` : sectionClass;
+        let contentHTML = sectionData.image ? `${textContentHtml}${imageHtml}` : textContentHtml;
+        const innerSectionClass = sectionData.image ? 'section-inner section-with-image' : 'section-inner';
         sectionHTML = `<div class="${outerDivClass}"><div class="${innerSectionClass}">${contentHTML}</div></div>`;
       }
       sectionsContainer.innerHTML += sectionHTML;
@@ -220,13 +190,10 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Element with ID "dynamic-footer" not found.');
       return;
     }
-    const footerLogoAlt = footerData.logo && footerData.logo.alt ? processTemplateString(footerData.logo.alt) : '';
     const currentYear = new Date().getFullYear();
-    // Construct copyright text using globals.companyName
     const companyNameForCopyright = getGlobal('companyName');
     const copyrightText = `&copy; ${currentYear} ${companyNameForCopyright || 'Your Company'}. All rights reserved.`;
 
-    // Retrieve and prepare footer elements from config
     const disclaimerHtml = footerData.disclaimerText ? `<div class="footer-top-disclaimer">${processTemplateString(footerData.disclaimerText, footerData)}</div>` : '';
     
     let brokerageInfoHtml = '';
@@ -244,11 +211,11 @@ document.addEventListener('DOMContentLoaded', () => {
         ? processTemplateString(footerData.secondaryLogo.altTemplate, footerData)
         : (footerData.secondaryLogo && footerData.secondaryLogo.alt ? processTemplateString(footerData.secondaryLogo.alt, footerData) : '');
     const conditionalSecondaryLogoHtml = (footerData.secondaryLogo && footerData.secondaryLogo.src)
-      ? `<img class="footer-logo-secondary" src="${footerData.secondaryLogo.src}" alt="${secondaryLogoAlt}">` // Removed inline style
+      ? `<img class="footer-logo-secondary" src="${footerData.secondaryLogo.src}" alt="${secondaryLogoAlt}">`
       : '';
 
     const privacyPolicyHtml = footerData.privacyPolicy
-      ? `<a href="${footerData.privacyPolicy.href || '#'}">${processTemplateString(footerData.privacyPolicy.text || 'Privacy Policy', footerData)}</a>` // Inline style removed, will be handled by CSS
+      ? `<a href="${footerData.privacyPolicy.href || '#'}">${processTemplateString(footerData.privacyPolicy.text || 'Privacy Policy', footerData)}</a>`
       : '';
 
     let agentContactsFooterHtml = '';
@@ -264,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (detail.type === "phone") {
               iconSvg = `<svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.761 0 5-2.239 5-5S14.761 2 12 2 7 4.239 7 7s2.239 5 5 5zm0 2c-3.314 0-10 1.668-10 5v3h20v-3c0-3.332-6.686-5-10-5z"></path></svg>`;
             }
-            agentContactsFooterHtml += `<div class="footer-agent-detail">${iconSvg} ${processTemplateString(detail.value)}</div>`; // Added SVG
+            agentContactsFooterHtml += `<div class="footer-agent-detail">${iconSvg} ${processTemplateString(detail.value)}</div>`;
           });
           agentContactsFooterHtml += `</div>`;
         }
@@ -301,5 +268,3 @@ document.addEventListener('DOMContentLoaded', () => {
   if (footer) renderFooter(footer);
 
 });
-// Ensure config.js is loaded before this script in HTML.
-// The 'config' constant from config.js will be in the global scope.
