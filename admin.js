@@ -6,10 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const formContainer = document.getElementById('config-form');
-    const generateBtn = document.getElementById('generate-config-btn');
-    const outputContainer = document.getElementById('output-container');
-    const configOutput = document.getElementById('config-output');
-    const copyBtn = document.getElementById('copy-config-btn');
+    const saveBtn = document.getElementById('save-changes-btn');
+    const saveStatus = document.getElementById('save-status');
 
     // ============================================================================================
     // HELPERS
@@ -17,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function toHumanReadable(text) {
         if (!text) return '';
+        if (text === 'src' || text === 'imageSrc') return 'Image URL';
         const result = text.replace(/([A-Z])/g, ' $1');
         return result.charAt(0).toUpperCase() + result.slice(1);
     }
@@ -25,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // DYNAMIC FORM GENERATION
     // ============================================================================================
 
-    function createFormElement(key, value, parentKey = '') {
+    function createFormElement(key, value, path) {
         const group = document.createElement('div');
         group.className = 'form-group';
         group.dataset.key = key;
@@ -34,48 +33,50 @@ document.addEventListener('DOMContentLoaded', () => {
         label.textContent = toHumanReadable(key);
         group.appendChild(label);
 
-        if (key === 'type' && parentKey === 'contactDetails') {
-            const select = document.createElement('select');
+        let input;
+        if (key === 'type' && path.includes('contactDetails')) {
+            input = document.createElement('select');
             const options = ['email', 'phone'];
             options.forEach(opt => {
                 const option = document.createElement('option');
                 option.value = opt;
                 option.textContent = toHumanReadable(opt);
                 if (opt === value) option.selected = true;
-                select.appendChild(option);
+                input.appendChild(option);
             });
-            group.appendChild(select);
-        } else if (key === 'type' && (value === 'standard' || value === 'ctaBanner')) {
-            const select = document.createElement('select');
-            select.className = 'section-type-selector';
+        } else if (key === 'type' && path.includes('sections')) {
+            input = document.createElement('select');
+            input.className = 'section-type-selector';
             const options = ['standard', 'ctaBanner'];
             options.forEach(opt => {
                 const option = document.createElement('option');
                 option.value = opt;
                 option.textContent = toHumanReadable(opt);
                 if (opt === value) option.selected = true;
-                select.appendChild(option);
+                input.appendChild(option);
             });
-            group.appendChild(select);
-            select.addEventListener('change', handleSectionTypeChange);
+            input.addEventListener('change', handleSectionTypeChange);
         } else if (Array.isArray(value)) {
-            group.appendChild(buildArrayEditor(key, value));
+            input = buildArrayEditor(key, value, path);
         } else if (typeof value === 'object' && value !== null) {
-            group.appendChild(buildObjectEditor(value, true, key));
+            input = buildObjectEditor(value, true, path);
         } else if (key.toLowerCase().includes('color')) {
+            const colorContainer = document.createElement('div');
             const colorInput = document.createElement('input');
             colorInput.type = 'color';
             colorInput.value = value;
-            group.appendChild(colorInput);
+            colorInput.dataset.path = path;
+            colorContainer.appendChild(colorInput);
             const textInput = document.createElement('input');
             textInput.type = 'text';
             textInput.value = value;
+            textInput.dataset.path = path;
             colorInput.addEventListener('input', () => textInput.value = colorInput.value);
             textInput.addEventListener('input', () => colorInput.value = textInput.value);
-            group.appendChild(textInput);
+            colorContainer.appendChild(textInput);
+            input = colorContainer;
         } else {
-            let input;
-            const isTextarea = typeof value === 'string' && (value.length > 60 || value.includes('\n') || value.includes('<') || key === 'headline');
+            const isTextarea = typeof value === 'string' && (value.length > 60 || value.includes('\n') || value.includes('<')) && key !== 'src' && key !== 'imageSrc';
             if (isTextarea) {
                 input = document.createElement('textarea');
                 input.rows = value.split('\n').length + 2;
@@ -84,8 +85,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 input.type = (typeof value === 'number') ? 'number' : 'text';
             }
             input.value = value;
-            group.appendChild(input);
         }
+        
+        if (input.nodeName !== 'FIELDSET' && input.nodeName !== 'DIV') {
+            input.dataset.path = path;
+        }
+        group.appendChild(input);
         return group;
     }
 
@@ -98,164 +103,113 @@ document.addEventListener('DOMContentLoaded', () => {
         fieldsToRemove.forEach(el => el.remove());
         if (newType === 'standard') {
             if (!typeTitleRow.querySelector('[data-key="title"]')) {
-                const titleElement = createFormElement('title', 'New Section');
+                const titleElement = createFormElement('title', 'New Section', selectElement.dataset.path.replace('type', 'title'));
                 titleElement.classList.add('col-3-4');
                 typeTitleRow.appendChild(titleElement);
             }
-            buildStandardSectionFields(sectionFieldset, {});
+            buildStandardSectionFields(sectionFieldset, {}, selectElement.dataset.path);
         } else if (newType === 'ctaBanner') {
             const titleElement = typeTitleRow.querySelector('[data-key="title"]');
             if (titleElement) titleElement.remove();
-            buildCtaBannerSectionFields(sectionFieldset, {});
+            buildCtaBannerSectionFields(sectionFieldset, {}, selectElement.dataset.path);
         }
     }
 
-    function buildStandardSectionFields(fieldset, data) {
-        fieldset.appendChild(createFormElement('paragraphs', data.paragraphs || ['']));
+    function buildStandardSectionFields(fieldset, data, pathPrefix) {
+        fieldset.appendChild(createFormElement('paragraphs', data.paragraphs || [''], `${pathPrefix.replace('type', 'paragraphs')}`));
         const optionalControlsContainer = document.createElement('div');
         optionalControlsContainer.className = 'optional-controls-row';
         const testimonialContainer = document.createElement('div');
         testimonialContainer.className = 'optional-container';
         optionalControlsContainer.appendChild(testimonialContainer);
-        updateOptionalButton(testimonialContainer, 'testimonial', data.testimonial, addTestimonialToSection);
+        updateOptionalButton(testimonialContainer, 'testimonial', data.testimonial, addTestimonialToSection, pathPrefix);
         const imageContainer = document.createElement('div');
         imageContainer.className = 'optional-container';
         optionalControlsContainer.appendChild(imageContainer);
-        updateOptionalButton(imageContainer, 'image', data.image, addImageToSection);
+        updateOptionalButton(imageContainer, 'image', data.image, addImageToSection, pathPrefix);
         fieldset.appendChild(optionalControlsContainer);
     }
 
-    function buildCtaBannerSectionFields(fieldset, data) {
-        fieldset.appendChild(createFormElement('ctaBannerContent', data.ctaBannerContent || { subhead: '', headline: '', smallText: '' }));
+    function buildCtaBannerSectionFields(fieldset, data, pathPrefix) {
+        fieldset.appendChild(createFormElement('ctaBannerContent', data.ctaBannerContent || { subhead: '', headline: '', smallText: '' }, `${pathPrefix.replace('type', 'ctaBannerContent')}`));
     }
 
-    function buildObjectEditor(obj, isNested = false, parentKey = '') {
+    function buildObjectEditor(obj, isNested = false, path) {
         const fieldset = document.createElement('fieldset');
         if (isNested) fieldset.className = 'nested-object';
 
-        if ('summary' in obj && 'sidebar' in obj) {
-            const gridContainer = document.createElement('div');
-            gridContainer.className = 'grid-container';
-            const summaryContainer = document.createElement('div');
-            summaryContainer.appendChild(createFormElement('summary', obj.summary));
-            gridContainer.appendChild(summaryContainer);
-            const sidebarContainer = document.createElement('div');
-            sidebarContainer.appendChild(createFormElement('sidebar', obj.sidebar));
-            gridContainer.appendChild(sidebarContainer);
-            fieldset.appendChild(gridContainer);
-            return fieldset;
-        }
-
-        if (obj.hasOwnProperty('type') && parentKey === 'sections') {
-            const typeTitleRow = document.createElement('div');
-            typeTitleRow.className = 'form-row type-title-row';
-            const typeElement = createFormElement('type', obj.type, parentKey);
-            typeElement.classList.add('col-1-4');
-            typeTitleRow.appendChild(typeElement);
-            if (obj.type === 'standard') {
-                const titleElement = createFormElement('title', obj.title || '');
-                titleElement.classList.add('col-3-4');
-                typeTitleRow.appendChild(titleElement);
-            }
-            fieldset.appendChild(typeTitleRow);
-            if (obj.type === 'standard') buildStandardSectionFields(fieldset, obj);
-            else if (obj.type === 'ctaBanner') buildCtaBannerSectionFields(fieldset, obj);
-            return fieldset;
-        }
-
         const keys = Object.keys(obj);
-        const groupedKeys = [];
-        const usedKeys = new Set();
-        const potentialGroups = [['name', 'imageSrc'], ['brokerageLabel', 'brokerageName'], ['primaryColor', 'accentColor'], ['mainCTAButtonText', 'mainCTAButtonURL'], ['title', 'subTitle'], ['type', 'value']];
-        
-        potentialGroups.forEach(group => {
-            if (group.every(key => keys.includes(key))) {
-                // Special case for contactDetails to ensure it's handled correctly
-                if (parentKey === 'contactDetails' && group.includes('type') && group.includes('value')) {
-                     groupedKeys.push(group);
-                     group.forEach(key => usedKeys.add(key));
-                } else if (parentKey !== 'contactDetails') {
-                    groupedKeys.push(group);
-                    group.forEach(key => usedKeys.add(key));
-                }
-            }
-        });
-
-        groupedKeys.forEach(keyGroup => {
-            const row = document.createElement('div');
-            row.className = 'form-row';
-            keyGroup.forEach(key => row.appendChild(createFormElement(key, obj[key], parentKey)));
-            fieldset.appendChild(row);
-        });
         keys.forEach(key => {
-            if (!usedKeys.has(key)) fieldset.appendChild(createFormElement(key, obj[key], parentKey));
+            fieldset.appendChild(createFormElement(key, obj[key], `${path}.${key}`));
         });
         return fieldset;
     }
 
-    function updateOptionalButton(container, key, data, addFunction) {
+    function updateOptionalButton(container, key, data, addFunction, pathPrefix) {
         container.innerHTML = '';
+        const newPath = pathPrefix.replace('type', key);
         if (data) {
-            const fields = createFormElement(key, data);
+            const fields = createFormElement(key, data, newPath);
             container.appendChild(fields);
             const removeBtn = document.createElement('button');
             removeBtn.type = 'button';
             removeBtn.textContent = `Remove ${toHumanReadable(key)}`;
             removeBtn.className = 'toggle-optional-btn remove-btn';
-            removeBtn.onclick = () => updateOptionalButton(container, key, null, addFunction);
+            removeBtn.onclick = () => updateOptionalButton(container, key, null, addFunction, pathPrefix);
             fields.appendChild(removeBtn);
         } else {
             const addBtn = document.createElement('button');
             addBtn.type = 'button';
             addBtn.textContent = `Add ${toHumanReadable(key)}`;
             addBtn.className = 'toggle-optional-btn add-btn';
-            addBtn.onclick = () => addFunction(container);
+            addBtn.onclick = () => addFunction(container, pathPrefix);
             container.appendChild(addBtn);
         }
     }
 
-    function addImageToSection(container) {
-        updateOptionalButton(container, 'image', { src: '', alt: '' }, addImageToSection);
+    function addImageToSection(container, pathPrefix) {
+        updateOptionalButton(container, 'image', { src: '' }, addImageToSection, pathPrefix);
     }
 
-    function addTestimonialToSection(container) {
-        updateOptionalButton(container, 'testimonial', { quote: '' }, addTestimonialToSection);
+    function addTestimonialToSection(container, pathPrefix) {
+        updateOptionalButton(container, 'testimonial', { quote: '' }, addTestimonialToSection, pathPrefix);
     }
 
-    function buildArrayEditor(key, arr) {
+    function buildArrayEditor(key, arr, path) {
         const container = document.createElement('div');
         const listContainer = document.createElement('div');
         listContainer.className = 'array-list';
         container.appendChild(listContainer);
         const isStringArray = arr.every(item => typeof item === 'string');
         if (isStringArray) {
-            arr.forEach(item => listContainer.appendChild(createStringArrayItem(item)));
+            arr.forEach((item, index) => listContainer.appendChild(createStringArrayItem(item, `${path}.${index}`)));
         } else {
-            arr.forEach((item, index) => listContainer.appendChild(createObjectArrayItem(item, key, index)));
+            arr.forEach((item, index) => listContainer.appendChild(createObjectArrayItem(item, key, index, `${path}.${index}`)));
         }
         const addBtn = document.createElement('button');
         addBtn.type = 'button';
         addBtn.textContent = `+ Add New ${toHumanReadable(key.slice(0, -1))}`;
         addBtn.className = 'add-btn';
         addBtn.onclick = () => {
+            const newIndex = listContainer.children.length;
+            const newPath = `${path}.${newIndex}`;
             if (isStringArray) {
-                listContainer.appendChild(createStringArrayItem(''));
-            } else if (key === 'sections') {
-                const newSectionTemplate = { type: 'standard', title: 'New Section', paragraphs: [''] };
-                listContainer.appendChild(createObjectArrayItem(newSectionTemplate, key, listContainer.children.length));
-            } else if (key === 'agents') {
-                 const newAgentTemplate = { name: '', imageSrc: '', contactDetails: [{type: 'email', value: ''}] };
-                 listContainer.appendChild(createObjectArrayItem(newAgentTemplate, key, listContainer.children.length));
-            } else if (key === 'contactDetails') {
-                const newContactTemplate = { type: 'email', value: '' };
-                listContainer.appendChild(createObjectArrayItem(newContactTemplate, key, listContainer.children.length));
+                listContainer.appendChild(createStringArrayItem('', newPath));
+            } else {
+                const newItemData = arr.length > 0 ? JSON.parse(JSON.stringify(arr[0])) : {};
+                Object.keys(newItemData).forEach(k => {
+                    if (Array.isArray(newItemData[k])) newItemData[k] = [];
+                    else if (typeof newItemData[k] === 'object' && newItemData[k] !== null) Object.keys(newItemData[k]).forEach(subKey => newItemData[k][subKey] = '');
+                    else newItemData[k] = '';
+                });
+                listContainer.appendChild(createObjectArrayItem(newItemData, key, newIndex, newPath));
             }
         };
         container.appendChild(addBtn);
         return container;
     }
 
-    function createObjectArrayItem(itemData, key, index) {
+    function createObjectArrayItem(itemData, key, index, path) {
         const itemContainer = document.createElement('div');
         itemContainer.className = 'array-item object-item';
         if (key === 'sections') {
@@ -264,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
             header.textContent = `Section ${index + 1}`;
             itemContainer.appendChild(header);
         }
-        const fieldset = buildObjectEditor(itemData, true, key);
+        const fieldset = buildObjectEditor(itemData, true, path);
         itemContainer.appendChild(fieldset);
         const controls = document.createElement('div');
         controls.className = 'array-controls';
@@ -279,12 +233,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return itemContainer;
     }
 
-    function createStringArrayItem(itemData) {
+    function createStringArrayItem(itemData, path) {
         const itemContainer = document.createElement('div');
         itemContainer.className = 'array-item string-item';
         const textarea = document.createElement('textarea');
         textarea.value = itemData;
         textarea.rows = 3;
+        textarea.dataset.path = path;
         itemContainer.appendChild(textarea);
         const controls = document.createElement('div');
         controls.className = 'array-controls';
@@ -301,105 +256,72 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function buildForm(config, container) {
         for (const key in config) {
-            const fieldset = document.createElement('fieldset');
-            const legend = document.createElement('legend');
-            legend.textContent = toHumanReadable(key);
-            fieldset.appendChild(legend);
-            if (key === 'sections') {
-                fieldset.appendChild(buildArrayEditor(key, config[key]));
-            } else {
-                fieldset.appendChild(buildObjectEditor(config[key]));
-            }
-            container.appendChild(fieldset);
+            container.appendChild(createFormElement(key, config[key], key));
         }
     }
 
     buildForm(window.config, formContainer);
 
     // ============================================================================================
-    // FORM PARSING AND CONFIG GENERATION
+    // FORM PARSING AND CONFIG GENERATION (REWRITTEN)
     // ============================================================================================
-
-    function parseFieldset(fieldset) {
-        const data = {};
-        const directChildren = Array.from(fieldset.children);
-        directChildren.forEach(child => {
-            if (child.classList.contains('form-group') || child.classList.contains('form-row')) {
-                const groups = child.classList.contains('form-row') ? child.querySelectorAll('.form-group') : [child];
-                groups.forEach(group => {
-                    const key = group.dataset.key;
-                    if (!key) return;
-                    const textInput = group.querySelector('input[type="text"], textarea:not(.string-item textarea)');
-                    const select = group.querySelector('select');
-                    const nestedFieldset = group.querySelector('fieldset.nested-object');
-                    const arrayContainer = group.querySelector('.array-list');
-                    if (arrayContainer) data[key] = parseArray(arrayContainer);
-                    else if (nestedFieldset) data[key] = parseFieldset(nestedFieldset);
-                    else if (select) data[key] = select.value;
-                    else if (textInput) {
-                        const colorInput = group.querySelector('input[type="color"]');
-                        if (colorInput) data[key] = group.querySelector('input[type="text"]').value;
-                        else data[key] = textInput.value;
-                    }
-                });
-            } else if (child.classList.contains('optional-controls-row')) {
-                const optionalGroups = child.querySelectorAll('.optional-container > .form-group');
-                optionalGroups.forEach(group => {
-                    const key = group.dataset.key;
-                    if (key) data[key] = parseFieldset(group.querySelector('fieldset'));
-                });
-            } else if (child.classList.contains('grid-container')) {
-                const gridGroups = child.querySelectorAll('.form-group');
-                gridGroups.forEach(group => {
-                    const key = group.dataset.key;
-                    if (key) data[key] = parseFieldset(group.querySelector('fieldset'));
-                });
+    
+    function setValue(obj, path, value) {
+        const keys = path.split('.');
+        let current = obj;
+        for (let i = 0; i < keys.length - 1; i++) {
+            const key = keys[i];
+            const nextKey = keys[i + 1];
+            const isNextKeyNumeric = !isNaN(parseInt(nextKey, 10));
+            if (!current[key]) {
+                current[key] = isNextKeyNumeric ? [] : {};
             }
-        });
-        return data;
-    }
-
-    function parseArray(arrayContainer) {
-        const arr = [];
-        const objectItems = arrayContainer.querySelectorAll(':scope > .object-item');
-        const stringItems = arrayContainer.querySelectorAll(':scope > .string-item');
-        if (objectItems.length > 0) {
-            objectItems.forEach(item => arr.push(parseFieldset(item.querySelector('fieldset'))));
-        } else if (stringItems.length > 0) {
-            stringItems.forEach(item => arr.push(item.querySelector('textarea').value));
+            current = current[key];
         }
-        return arr;
+        current[keys[keys.length - 1]] = value;
     }
 
-    generateBtn.addEventListener('click', () => {
-        const newConfig = {};
-        const topLevelFieldsets = formContainer.querySelectorAll(':scope > fieldset');
-        topLevelFieldsets.forEach(fieldset => {
-            const legendText = fieldset.querySelector('legend').textContent;
-            const key = legendText.toLowerCase().replace(/\s/g, '');
-            const arrayEditor = fieldset.querySelector(':scope > div > .array-list');
-            if (key === 'sections' && arrayEditor) {
-                newConfig[key] = parseArray(arrayEditor);
-            } else {
-                newConfig[key] = parseFieldset(fieldset.querySelector(':scope > fieldset'));
-            }
-        });
-        const finalConfigString = `const config = ${JSON.stringify(newConfig, null, 4)};\n\n` +
-            `// Export for Node.js environment (if applicable) or set for browser\n` +
-            `if (typeof module !== 'undefined' && module.exports) {\n` +
-            `  module.exports = config;\n` +
-            `} else if (typeof window !== 'undefined') {\n` +
-            `  window.config = config;\n` +
-            `}`;
-        configOutput.value = finalConfigString;
-        outputContainer.style.display = 'block';
-        window.scrollTo(0, document.body.scrollHeight);
-    });
+    saveBtn.addEventListener('click', async () => {
+        saveBtn.disabled = true;
+        saveStatus.textContent = 'Saving...';
+        saveStatus.className = 'status-saving';
 
-    copyBtn.addEventListener('click', () => {
-        configOutput.select();
-        document.execCommand('copy');
-        copyBtn.textContent = 'Copied!';
-        setTimeout(() => copyBtn.textContent = 'Copy to Clipboard', 2000);
+        const newConfig = {};
+        const allInputs = formContainer.querySelectorAll('[data-path]');
+
+        allInputs.forEach(input => {
+            const path = input.dataset.path;
+            let value = input.value;
+            if (input.type === 'number') value = parseFloat(value);
+            setValue(newConfig, path, value);
+        });
+
+        try {
+            const response = await fetch('https://n8n.salesgenius.co/webhook/casestudyupdate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(newConfig),
+            });
+
+            if (response.ok) {
+                saveStatus.textContent = '✅ Changes Saved Successfully!';
+                saveStatus.className = 'status-success';
+            } else {
+                const errorText = await response.text();
+                throw new Error(`Webhook failed with status: ${response.status}. ${errorText}`);
+            }
+        } catch (error) {
+            console.error('Error saving config:', error);
+            saveStatus.textContent = `❌ Error: Could not save changes. ${error.message}`;
+            saveStatus.className = 'status-error';
+        } finally {
+            setTimeout(() => {
+                saveBtn.disabled = false;
+                saveStatus.textContent = '';
+                saveStatus.className = '';
+            }, 4000);
+        }
     });
 });

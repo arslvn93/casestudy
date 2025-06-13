@@ -103,3 +103,54 @@ graph TD
     G --> H[User manually copies text];
     H --> I[User pastes into config.js and saves];
     I --> J[Page is reloaded to reflect changes];
+```
+
+## Phase 4: Implement Webhook-Based Saving
+
+**Objective:** Modify the admin panel to replace the manual copy-paste process with an automated `POST` request to a webhook. This will send the entire updated configuration object to an external service, which will then handle updating the `config.js` file in the GitHub repository.
+
+1.  **UI & HTML Structure Update**
+    *   **Modify `admin.html`:**
+        *   The main action button, currently labeled "Generate Config", will be renamed to "Save Changes" to better reflect its new function. Its ID will be changed from `generate-config-btn` to `save-changes-btn`.
+        *   The entire `output-container` `div`, which holds the large `<textarea>` and the "Copy to Clipboard" button, will be removed as it is no longer needed.
+        *   A new, empty `div` with an ID of `save-status` will be added in the footer. This element will be used to provide real-time feedback to the user during the save process (e.g., "Saving...", "Changes Saved Successfully!", "Error").
+
+2.  **JavaScript Logic Implementation**
+    *   **Update Event Listener:**
+        *   The event listener will be retargeted from the old button ID to the new `save-changes-btn`.
+    *   **Implement `fetch` Request:**
+        *   Inside the event listener, after the existing logic successfully reconstructs the `config` object from the form, a new block of code will execute.
+        *   This code will use the browser's `fetch` API to send an HTTP `POST` request.
+        *   **Endpoint:** `https://n8n.salesgenius.co/webhook/casestudyupdate`
+        *   **Headers:** The `Content-Type` header will be set to `application/json`.
+        *   **Body:** The entire reconstructed `config` object will be converted to a JSON string using `JSON.stringify()` and sent as the request body.
+    *   **Implement User Feedback:**
+        *   **Before Fetch:** As soon as the "Save Changes" button is clicked, the script will immediately:
+            *   Disable the button to prevent multiple clicks.
+            *   Update the `save-status` div with a message like "Saving...".
+        *   **After Fetch (Success):** If the `fetch` request returns a successful response (e.g., a 200 OK status), the script will:
+            *   Update the `save-status` div with a success message, like "✅ Changes Saved Successfully!".
+            *   Re-enable the button after a short delay (e.g., 3 seconds) and clear the status message.
+        *   **After Fetch (Error):** If the `fetch` request fails or returns an error status, the script will:
+            *   Update the `save-status` div with an error message, like "❌ Error: Could not save changes. Please try again.".
+            *   Re-enable the button so the user can retry.
+
+3.  **Styling the Feedback**
+    *   **Update `admin.css`:**
+        *   New styles will be added for the `#save-status` element to ensure the feedback messages are clear and well-formatted.
+        *   This will include styles for success (e.g., green text) and error (e.g., red text) states.
+
+### Mermaid Diagram: New Save Process Flow
+
+```mermaid
+graph TD
+    A[User clicks "Save Changes"] --> B{Disable button & show "Saving..."};
+    B --> C{Reconstruct config object from form};
+    C --> D{Send config object via POST to webhook};
+    D --> E{Webhook responds};
+    E -- Success (200 OK) --> F[Show "✅ Success" message];
+    E -- Error --> G[Show "❌ Error" message];
+    F --> H{Re-enable button after delay};
+    G --> I{Re-enable button immediately};
+    H --> J[End];
+    I --> J[End];

@@ -285,7 +285,7 @@ footer {
     border-top: 1px solid var(--border-color);
 }
 
-#generate-config-btn {
+#save-changes-btn {
     background-color: var(--accent-color);
     color: white;
     font-size: 1.1rem;
@@ -294,9 +294,26 @@ footer {
     border-radius: 8px;
     border: none;
 }
-#generate-config-btn:hover {
+#save-changes-btn:hover {
     background-color: #0062cc;
 }
+#save-changes-btn:disabled {
+    background-color: #a0c7ff;
+    cursor: not-allowed;
+}
+
+#save-status {
+    margin-top: 1rem;
+    font-weight: 500;
+    height: 1.5em;
+}
+.status-success {
+    color: var(--success-color);
+}
+.status-error {
+    color: var(--danger-color);
+}
+
 
 #output-container {
     margin-top: 2rem;

@@ -70,10 +70,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (summaryContainer && mainBoxData.summary) {
       const summary = mainBoxData.summary;
-      const heroAltText = summary.heroImage && summary.heroImage.alt ? processTemplateString(summary.heroImage.alt) : '';
       summaryContainer.innerHTML = `
         <h2>${processTemplateString(summary.title || '')}</h2>
-        ${summary.heroImage ? `<img class="hero" src="${summary.heroImage.src}" alt="${heroAltText}">` : ''}
+        ${summary.heroImage ? `<img class="hero" src="${summary.heroImage.src}" alt="">` : ''}
         ${summary.subTitle ? `<h2>${processTemplateString(summary.subTitle)}</h2>` : ''}
         ${(summary.paragraphs || []).map(p => `<p>${processTemplateString(p)}</p>`).join('')}
         <a href="${ctaButtonURL}" class="summary-btn-link"><button class="summary-btn">${getGlobal('mainCTAButtonText') || 'Book A Discovery Call'}</button></a>
@@ -91,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (agent && agent.name && agent.contactDetails && Array.isArray(agent.contactDetails)) {
             let agentBlockHTML = '';
             if (agent.imageSrc) {
-              agentBlockHTML += `<img src="${agent.imageSrc}" alt="${processTemplateString(agent.name)}" class="sidebar-agent-photo">`;
+              agentBlockHTML += `<img src="${agent.imageSrc}" alt="" class="sidebar-agent-photo">`;
             }
             
             let agentDetailsHTML = `<div class="sidebar-agent-info">`;
@@ -121,13 +120,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-      const sidebarImageAlt = sidebar.image && sidebar.image.alt ? processTemplateString(sidebar.image.alt) : '';
-      const companyNameForSidebar = getGlobal('companyName');
-      const sidebarTitle = sidebar.title ? processTemplateString(sidebar.title) : (companyNameForSidebar ? `About ${companyNameForSidebar}` : 'About Us');
-
       sidebarContainer.innerHTML = `
-        <h3>${sidebarTitle}</h3>
-        ${sidebar.image ? `<img src="${sidebar.image.src}" alt="${sidebarImageAlt}">` : ''}
+        <h3>${processTemplateString(sidebar.title) || 'About Us'}</h3>
+        ${sidebar.image ? `<img src="${sidebar.image.src}" alt="">` : ''}
         ${(sidebar.paragraphs || []).map(p => `<p>${processTemplateString(p)}</p>`).join('')}
         <div class="contacts">${contactsHTML}</div>
       `;
@@ -164,8 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         `;
       } else if (sectionData.type === 'standard') {
-        const imageAlt = sectionData.image && sectionData.image.alt ? processTemplateString(sectionData.image.alt) : '';
-        const imageHtml = sectionData.image ? `<div class="section-image-content"><img src="${sectionData.image.src}" alt="${imageAlt}"></div>` : '';
+        const imageHtml = sectionData.image ? `<div class="section-image-content"><img src="${sectionData.image.src}" alt=""></div>` : '';
         
         const textContentHtml = `
           <div class="section-text-content">
@@ -204,14 +198,10 @@ document.addEventListener('DOMContentLoaded', () => {
       brokerageInfoHtml += `<br>${processTemplateString(footerData.brokerageAddress, footerData)}`;
     }
 
-    const mainLogoAlt = footerData.logo && footerData.logo.alt ? processTemplateString(footerData.logo.alt) : '';
-    const mainLogoHtml = footerData.logo ? `<img class="footer-logo-main" src="${footerData.logo.src}" alt="${mainLogoAlt}">` : '';
+    const mainLogoHtml = footerData.logo ? `<img class="footer-logo-main" src="${footerData.logo.src}" alt="">` : '';
 
-    const secondaryLogoAlt = footerData.secondaryLogo && footerData.secondaryLogo.altTemplate
-        ? processTemplateString(footerData.secondaryLogo.altTemplate, footerData)
-        : (footerData.secondaryLogo && footerData.secondaryLogo.alt ? processTemplateString(footerData.secondaryLogo.alt, footerData) : '');
     const conditionalSecondaryLogoHtml = (footerData.secondaryLogo && footerData.secondaryLogo.src)
-      ? `<img class="footer-logo-secondary" src="${footerData.secondaryLogo.src}" alt="${secondaryLogoAlt}">`
+      ? `<img class="footer-logo-secondary" src="${footerData.secondaryLogo.src}" alt="">`
       : '';
 
     const privacyPolicyHtml = footerData.privacyPolicy

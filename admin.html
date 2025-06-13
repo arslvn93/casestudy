@@ -10,7 +10,7 @@
 
     <header>
         <h1>Case Study Content Editor</h1>
-        <p>Use this page to edit the content of the case study. When you are finished, click the "Generate Config" button at the bottom of the page.</p>
+        <p>Use this page to edit the content of the case study. When you are finished, click "Save Changes" at the bottom of the page.</p>
     </header>
 
     <main>
@@ -20,13 +20,8 @@
     </main>
 
     <footer>
-        <div id="output-container" style="display: none;">
-            <h2>Generated Configuration</h2>
-            <p><strong>Instructions:</strong> 1. Click the button to copy all text. 2. Open <code>config.js</code>. 3. Delete all old content. 4. Paste the new content. 5. Save the file.</p>
-            <button id="copy-config-btn">Copy to Clipboard</button>
-            <textarea id="config-output" readonly></textarea>
-        </div>
-        <button id="generate-config-btn">Generate Config</button>
+        <button id="save-changes-btn">Save Changes</button>
+        <div id="save-status"></div>
     </footer>
 
     <script src="config.js"></script>

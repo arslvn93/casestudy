@@ -75,7 +75,7 @@ const config = {
     // Content for the left column (the main summary).
     summary: {
       title: "How We Helped an Investor Win a 10-Offer Bidding War and Secure a Cash-Flowing Duplex in Vaughan",
-      heroImage: { src: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=800&q=80", alt: "Duplex Vaughan" },
+      heroImage: { src: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=800&q=80" },
       subTitle: "Summary",
       // An array of paragraph strings. Each string is a new paragraph. Can include HTML.
       paragraphs: [
@@ -85,7 +85,8 @@ const config = {
     },
     // Content for the right column (the sidebar).
     sidebar: {
-      image: { src: "https://images.unsplash.com/photo-1511367461989-f85a21fda167?fit=crop&w=200&q=80", alt: "iStreet Realty Group agents" },
+      title: "About {{companyName}}",
+      image: { src: "https://images.unsplash.com/photo-1511367461989-f85a21fda167?fit=crop&w=200&q=80" },
       // An array of paragraph strings for the sidebar. Can include HTML like <br> for line breaks.
       paragraphs: [
         "At {{companyName}} we are built on integrity, insight, and innovation.<br><br>We combine decades of real estate expertise with cutting-edge technology to deliver unmatched support, transparency, and results for our clients.<br><br>With over 40 years of hands-on real estate experience and extensive corporate backgrounds, our managing partners provide a balanced and strategic approach to Residential, Commercial, and Investment properties.<br><br>We prioritize clear communication and use the latest market insights to guide every client toward success—whether buying, selling, or investing.<br><strong>At iStreet Realty Inc., we're more than real estate experts—we're your trusted partner in building your future.</strong>"
@@ -129,13 +130,13 @@ const config = {
         "<strong>After closing, the client successfully rented out both units</strong> of the property at top market value—proving the property’s income potential. The fast, clean closing allowed the client to move quickly and capitalize on a prime investment opportunity."
       ],
       // An optional image object. If present, creates a two-column layout for this section.
-      image: { src: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=800&q=80", alt: "Interior of the secured duplex" }
+      image: { src: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=800&q=80" }
     },
     {
       type: "standard",
       title: "The Results",
       // An optional array of strings for a bulleted list.
-      listItems: [
+      paragraphs: [
         "The client won a competitive 10-offer bidding war and secured a turn-key duplex in Woodbridge that now generates strong rental income.",
         "Both units were rented out at top market value shortly after closing, confirming the investment’s potential.",
         "<strong>By acting quickly and strategically, the client not only acquired a high-performing property in a competitive market, but also set themselves up for significant equity growth over the next 3–5 years.</strong>"
@@ -162,12 +163,12 @@ const config = {
   // Content for the footer at the bottom of the page.
   // -----------------------------------------------------------------------------------------------
   footer: {
-    logo: { src: "https://images.unsplash.com/photo-1511367461989-f85a21fda167?fit=crop&w=200&q=80", alt: "{{companyName}} Logo" },
+    logo: { src: "https://images.unsplash.com/photo-1511367461989-f85a21fda167?fit=crop&w=200&q=80" },
     brokerageLabel: "Brokerage:",
     brokerageName: "Homelife Partners Realty Corp.",
     brokerageAddress: "123 Main Street, Suite 456, Toronto, ON M1M 1M1",
     // A secondary logo, often for the brokerage. Optional.
-    secondaryLogo: { src: "https://i.imgur.com/9GIzqTo.png", altTemplate: "Logo of {{brokerageName}}" },
+    secondaryLogo: { src: "https://i.imgur.com/9GIzqTo.png" },
     disclaimerText: "All testimonials on this page are from real clients. Their experiences do not guarantee similar results.<br>Individual results may vary based on location, market conditions, motivation, as well as other unforeseen factors. Your results may vary.",
     privacyPolicy: { text: "Privacy Policy", href: "#" }
   }
