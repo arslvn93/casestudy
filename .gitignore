@@ -8,4 +8,3 @@ yarn-debug.log*
 yarn-error.log*
 
 # Environment-specific config
-github.js
