@@ -18,7 +18,7 @@ const config = {
     // The default text for all major Call-to-Action (CTA) buttons.
     mainCTAButtonText: "Book A Discovery Call",
     // The destination URL for all major Call-to-Action (CTA) buttons.
-    mainCTAButtonURL: "#contact",
+    mainCTAButtonURL: "https://calendly.com/your-salesgenius-link",
 
     // The primary theme color for the page (e.g., for tags, links, highlights).
     // This value is applied to the `--gold` CSS variable.
@@ -63,7 +63,7 @@ const config = {
     // The main headline (H1) of the page.
     title: "How We Helped an Investor Win a 10-Offer Bidding War and Secure a Cash-Flowing Duplex in Vaughan",
     // The subheadline below the main title. Can include HTML tags like <strong> or <a>.
-    subheadline: "Purchased in a <strong>High-Demand Area</strong> With Strong Terms—Now <a href=\"#\">Generating Top-Dollar Rent</a> in a Tight Market"
+    subheadline: "Purchased in a <strong>High-Demand Area</strong> With Strong Terms—Now Generating Top-Dollar Rent in a Tight Market"
   },
 
   // -----------------------------------------------------------------------------------------------
@@ -89,7 +89,11 @@ const config = {
       image: { src: "https://images.unsplash.com/photo-1511367461989-f85a21fda167?fit=crop&w=200&q=80" },
       // An array of paragraph strings for the sidebar. Can include HTML like <br> for line breaks.
       paragraphs: [
-        "At {{companyName}} we are built on integrity, insight, and innovation.<br><br>We combine decades of real estate expertise with cutting-edge technology to deliver unmatched support, transparency, and results for our clients.<br><br>With over 40 years of hands-on real estate experience and extensive corporate backgrounds, our managing partners provide a balanced and strategic approach to Residential, Commercial, and Investment properties.<br><br>We prioritize clear communication and use the latest market insights to guide every client toward success—whether buying, selling, or investing.<br><strong>At iStreet Realty Inc., we're more than real estate experts—we're your trusted partner in building your future.</strong>"
+        "At {{companyName}} we are built on integrity, insight, and innovation.",
+        "We combine decades of real estate expertise with cutting-edge technology to deliver unmatched support, transparency, and results for our clients.",
+        "With over 40 years of hands-on real estate experience and extensive corporate backgrounds, our managing partners provide a balanced and strategic approach to Residential, Commercial, and Investment properties.",
+        "We prioritize clear communication and use the latest market insights to guide every client toward success—whether buying, selling, or investing.",
+        "<strong>At iStreet Realty Inc., we're more than real estate experts—we're your trusted partner in building your future.</strong>"
       ]
     }
   },
@@ -136,7 +140,7 @@ const config = {
       type: "standard",
       title: "The Results",
       // An optional array of strings for a bulleted list.
-      paragraphs: [
+      listItems: [
         "The client won a competitive 10-offer bidding war and secured a turn-key duplex in Woodbridge that now generates strong rental income.",
         "Both units were rented out at top market value shortly after closing, confirming the investment’s potential.",
         "<strong>By acting quickly and strategically, the client not only acquired a high-performing property in a competitive market, but also set themselves up for significant equity growth over the next 3–5 years.</strong>"

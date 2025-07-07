@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="section-text-content">
             ${sectionData.title ? `<h3>${processTemplateString(sectionData.title)}</h3>` : ''}
             ${(sectionData.paragraphs || []).map(p => `<p>${processTemplateString(p)}</p>`).join('')}
-            ${sectionData.listItems ? `<p class="list-paragraph">${sectionData.listItems.map(li => processTemplateString(li)).join(' ')}</p>` : ''}
+            ${sectionData.listItems ? `<ul>${sectionData.listItems.map(li => `<li>${processTemplateString(li)}</li>`).join('')}</ul>` : ''}
             ${sectionData.testimonial ? `<div class="testimonial">${processTemplateString(sectionData.testimonial.quote)}</div>` : ''}
           </div>
         `;

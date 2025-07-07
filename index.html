@@ -316,17 +316,30 @@
       font-style: italic;
     }
     .section-inner ul {
-      margin: 1.3em 0;
-      padding-left: 1.5em;
-      font-size: 1.15em; 
+      margin: 1em 0; /* Reduced margin */
+      padding-left: 0; /* Remove default padding */
+      list-style: none; /* Remove default bullet points */
+      font-size: 1.15em;
       color: #222;
     }
-    .section-inner ul li { margin-bottom: 0.8em; } 
-    .section-inner strong { font-weight: 700; }
-    .section-inner .list-paragraph {
-      font-style: italic;
-      color: #555;
+    .section-inner ul li {
+      margin-bottom: 0.4em; /* Reduced space between list items */
+      padding-left: 1.5em; /* Space for icon */
+      position: relative;
     }
+    .section-inner ul li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.4em; /* Adjust vertical alignment of icon */
+      width: 0.8em;
+      height: 0.8em;
+      background-color: var(--gold); /* Icon color */
+      -webkit-mask: url('data:image/svg+xml;utf8,<svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>') no-repeat 50% 50%;
+      mask: url('data:image/svg+xml;utf8,<svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>') no-repeat 50% 50%;
+      background-size: contain;
+    }
+    .section-inner strong { font-weight: 700; }
     
     .cta-section {
       width: 100%;
