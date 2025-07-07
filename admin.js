@@ -5,13 +5,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    const formContainer = document.getElementById('config-form');
-    const saveBtn = document.getElementById('save-changes-btn');
-    const saveStatus = document.getElementById('save-status');
+    const adminLayout = document.getElementById('adminLayout');
+    const configForm = document.getElementById('configForm');
+    const messageDiv = document.getElementById('message');
 
-    // ============================================================================================
-    // HELPERS
-    // ============================================================================================
+    // --- Helper Functions ---
+    function getVal(id) { const el = document.getElementById(id); return el ? (el.type === 'checkbox' ? el.checked : el.value) : ''; }
+    function setVal(id, value) { const el = document.getElementById(id); if (el) { if (el.type === 'checkbox') { el.checked = !!value; } else { el.value = value === undefined || value === null ? '' : value; } } }
+    // No longer need arrayFromTextarea or textareaFromArray as paragraphs are now dynamic items
 
     function toHumanReadable(text) {
         if (!text) return '';
@@ -20,320 +21,484 @@ document.addEventListener('DOMContentLoaded', () => {
         return result.charAt(0).toUpperCase() + result.slice(1);
     }
 
-    // ============================================================================================
-    // DYNAMIC FORM GENERATION
-    // ============================================================================================
-
-    function createFormElement(key, value, path) {
-        const group = document.createElement('div');
-        group.className = 'form-group';
-        group.dataset.key = key;
-
-        const label = document.createElement('label');
-        label.textContent = toHumanReadable(key);
-        group.appendChild(label);
-
-        let input;
-        if (key === 'type' && path.includes('contactDetails')) {
-            input = document.createElement('select');
-            const options = ['email', 'phone'];
-            options.forEach(opt => {
-                const option = document.createElement('option');
-                option.value = opt;
-                option.textContent = toHumanReadable(opt);
-                if (opt === value) option.selected = true;
-                input.appendChild(option);
+    // --- Dynamic Item Rendering Functions ---
+    function renderDynamicItems(containerId, items, renderItemFn) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = ''; // Clear existing
+        if (Array.isArray(items)) {
+            items.forEach((item, index) => {
+                container.appendChild(renderItemFn(item, index));
             });
-        } else if (key === 'type' && path.includes('sections')) {
-            input = document.createElement('select');
-            input.className = 'section-type-selector';
-            const options = ['standard', 'ctaBanner'];
-            options.forEach(opt => {
-                const option = document.createElement('option');
-                option.value = opt;
-                option.textContent = toHumanReadable(opt);
-                if (opt === value) option.selected = true;
-                input.appendChild(option);
-            });
-            input.addEventListener('change', handleSectionTypeChange);
-        } else if (Array.isArray(value)) {
-            input = buildArrayEditor(key, value, path);
-        } else if (typeof value === 'object' && value !== null) {
-            input = buildObjectEditor(value, true, path);
-        } else if (key.toLowerCase().includes('color')) {
-            const colorContainer = document.createElement('div');
-            const colorInput = document.createElement('input');
-            colorInput.type = 'color';
-            colorInput.value = value;
-            colorContainer.appendChild(colorInput);
-            const textInput = document.createElement('input');
-            textInput.type = 'text';
-            textInput.value = value;
-            textInput.dataset.path = path; // The text input holds the value
-            colorInput.addEventListener('input', () => textInput.value = colorInput.value);
-            textInput.addEventListener('input', () => colorInput.value = textInput.value);
-            colorContainer.appendChild(textInput);
-            input = colorContainer;
-        } else {
-            const isTextarea = typeof value === 'string' && (value.length > 60 || value.includes('\n') || value.includes('<')) && key !== 'src' && key !== 'imageSrc';
-            if (isTextarea) {
-                input = document.createElement('textarea');
-                input.rows = value.split('\n').length + 2;
-            } else {
-                input = document.createElement('input');
-                input.type = (typeof value === 'number') ? 'number' : 'text';
-            }
-            input.value = value;
         }
-        
-        if (input.nodeName !== 'FIELDSET' && input.nodeName !== 'DIV') {
-            input.dataset.path = path;
-        }
-        group.appendChild(input);
-        return group;
     }
 
-    function handleSectionTypeChange(event) {
-        const selectElement = event.target;
+    function addDynamicItem(containerId, defaultItem, createFn) {
+        const container = document.getElementById(containerId);
+        if (container) {
+            const newItemElement = createFn(defaultItem, container.children.length);
+            container.appendChild(newItemElement);
+        }
+    }
+
+    function removeDynamicItem(buttonElement) {
+        const itemGroup = buttonElement.closest('.dynamic-item-group');
+        if (itemGroup) {
+            itemGroup.remove();
+        }
+    }
+
+    // --- Specific Dynamic Item Creators ---
+
+    // Agents (Globals)
+    function createContactDetailInputs(detail, agentIndex, detailIndex) {
+        const div = document.createElement('div');
+        div.className = 'dynamic-item-group contact-detail-item'; // Added class for easier selection
+        div.innerHTML = `
+            <h5>Contact Detail ${detailIndex + 1}</h5>
+            <div class="form-group">
+                <label for="agentContactType${agentIndex}_${detailIndex}">Type:</label>
+                <select id="agentContactType${agentIndex}_${detailIndex}" name="agentContactType${agentIndex}_${detailIndex}">
+                    <option value="email" ${detail.type === 'email' ? 'selected' : ''}>Email</option>
+                    <option value="phone" ${detail.type === 'phone' ? 'selected' : ''}>Phone</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="agentContactValue${agentIndex}_${detailIndex}">Value:</label>
+                <input type="text" id="agentContactValue${agentIndex}_${detailIndex}" name="agentContactValue${agentIndex}_${detailIndex}" value="${detail.value || ''}">
+            </div>
+            <div class="dynamic-item-controls">
+                <button type="button" onclick="removeDynamicItem(this)">Remove Detail</button>
+            </div>
+        `;
+        return div;
+    }
+
+    function addContactDetail(buttonElement, agentIndex) {
+        const container = buttonElement.closest('fieldset').querySelector(`#agentContactDetailsContainer${agentIndex}`);
+        if (container) {
+            const newDetailElement = createContactDetailInputs({ type: 'email', value: '' }, agentIndex, container.children.length);
+            container.appendChild(newDetailElement);
+        }
+    }
+
+    function createAgentInputs(agent, index) {
+        const div = document.createElement('div');
+        div.className = 'dynamic-item-group';
+        div.innerHTML = `
+            <h4>Agent ${index + 1}</h4>
+            <div class="form-group">
+                <label for="agentName${index}">Name:</label>
+                <input type="text" id="agentName${index}" name="agentName${index}" value="${agent.name || ''}">
+            </div>
+            <div class="form-group">
+                <label for="agentImageSrc${index}">Image URL:</label>
+                <input type="url" id="agentImageSrc${index}" name="agentImageSrc${index}" value="${agent.imageSrc || ''}">
+            </div>
+            <fieldset>
+                <legend>Contact Details</legend>
+                <div id="agentContactDetailsContainer${index}">
+                    ${(agent.contactDetails || []).map((detail, detailIndex) => createContactDetailInputs(detail, index, detailIndex).outerHTML).join('')}
+                </div>
+                <div class="dynamic-item-controls">
+                    <button type="button" class="add-item" onclick="addContactDetail(this, ${index})">Add Contact Detail</button>
+                </div>
+            </fieldset>
+            <div class="dynamic-item-controls">
+                <button type="button" onclick="removeDynamicItem(this)">Remove Agent</button>
+            </div>
+        `;
+        return div;
+    }
+
+    function addAgent() {
+        addDynamicItem('agentsContainer', { name: '', imageSrc: '', contactDetails: [{ type: 'email', value: '' }] }, createAgentInputs);
+    }
+
+    // Generic Paragraph/List Item
+    function createParagraphInput(text, containerId, index) {
+        const div = document.createElement('div');
+        div.className = 'dynamic-item-group paragraph-item';
+        div.innerHTML = `
+            <div class="form-group">
+                <label for="${containerId}Text${index}">Text:</label>
+                <textarea id="${containerId}Text${index}" name="${containerId}Text${index}">${text || ''}</textarea>
+            </div>
+            <div class="dynamic-item-controls">
+                <button type="button" onclick="removeDynamicItem(this)">Remove Item</button>
+            </div>
+        `;
+        return div;
+    }
+
+    function addParagraph(containerId) {
+        addDynamicItem(containerId, '', (text, index) => createParagraphInput(text, containerId, index));
+    }
+
+    // Sections
+    function createSectionInputs(section, index) {
+        const div = document.createElement('div');
+        div.className = 'dynamic-item-group';
+        let contentHtml = '';
+        let titleInput = '';
+
+        if (section.type === 'standard') {
+            titleInput = `
+                <div class="form-group">
+                    <label for="sectionTitle${index}">Title:</label>
+                    <input type="text" id="sectionTitle${index}" name="sectionTitle${index}" value="${section.title || ''}">
+                </div>
+            `;
+            contentHtml = `
+                <div class="form-group">
+                    <label>Paragraphs:</label>
+                    <div id="sectionParagraphsContainer${index}">
+                        ${(section.paragraphs || []).map((p, pIndex) => createParagraphInput(p, `sectionParagraphsContainer${index}`, pIndex).outerHTML).join('')}
+                    </div>
+                    <div class="dynamic-item-controls">
+                        <button type="button" class="add-item" onclick="addParagraph('sectionParagraphsContainer${index}')">Add Paragraph</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>List Items:</label>
+                    <div id="sectionListItemsContainer${index}">
+                        ${(section.listItems || []).map((li, liIndex) => createParagraphInput(li, `sectionListItemsContainer${index}`, liIndex).outerHTML).join('')}
+                    </div>
+                    <div class="dynamic-item-controls">
+                        <button type="button" class="add-item" onclick="addParagraph('sectionListItemsContainer${index}')">Add List Item</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="sectionTestimonialQuote${index}">Testimonial Quote:</label>
+                    <textarea id="sectionTestimonialQuote${index}" name="sectionTestimonialQuote${index}">${section.testimonial?.quote || ''}</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="sectionImageSrc${index}">Image URL:</label>
+                    <input type="url" id="sectionImageSrc${index}" name="sectionImageSrc${index}" value="${section.image?.src || ''}">
+                </div>
+            `;
+        } else if (section.type === 'ctaBanner') {
+            contentHtml = `
+                <div class="form-group">
+                    <label for="ctaBannerSubhead${index}">Subhead:</label>
+                    <input type="text" id="ctaBannerSubhead${index}" name="ctaBannerSubhead${index}" value="${section.ctaBannerContent?.subhead || ''}">
+                </div>
+                <div class="form-group">
+                    <label for="ctaBannerHeadline${index}">Headline (HTML allowed):</label>
+                    <textarea id="ctaBannerHeadline${index}" name="ctaBannerHeadline${index}">${section.ctaBannerContent?.headline || ''}</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="ctaBannerSmallText${index}">Small Text:</label>
+                    <input type="text" id="ctaBannerSmallText${index}" name="ctaBannerSmallText${index}" value="${section.ctaBannerContent?.smallText || ''}">
+                </div>
+            `;
+        }
+
+        div.innerHTML = `
+            <h4>Section ${index + 1}</h4>
+            <div class="form-group">
+                <label for="sectionType${index}">Section Type:</label>
+                <select id="sectionType${index}" name="sectionType${index}" onchange="handleSectionTypeChange(this, ${index})">
+                    <option value="standard" ${section.type === 'standard' ? 'selected' : ''}>Standard Content</option>
+                    <option value="ctaBanner" ${section.type === 'ctaBanner' ? 'selected' : ''}>CTA Banner</option>
+                </select>
+            </div>
+            ${titleInput}
+            <div id="sectionContent${index}">
+                ${contentHtml}
+            </div>
+            <div class="dynamic-item-controls">
+                <button type="button" onclick="removeDynamicItem(this)">Remove Section</button>
+            </div>
+        `;
+        return div;
+    }
+
+    function addSection() {
+        addDynamicItem('sectionsContainer', { type: 'standard', title: '', paragraphs: [''] }, createSectionInputs);
+    }
+
+    function handleSectionTypeChange(selectElement, index) {
         const newType = selectElement.value;
-        const sectionFieldset = selectElement.closest('.nested-object');
-        const typeTitleRow = sectionFieldset.querySelector('.type-title-row');
-        const fieldsToRemove = Array.from(sectionFieldset.children).filter(child => child !== typeTitleRow);
-        fieldsToRemove.forEach(el => el.remove());
-        
-        const pathPrefix = selectElement.dataset.path.substring(0, selectElement.dataset.path.lastIndexOf('.'));
+        const sectionContentDiv = document.getElementById(`sectionContent${index}`);
+        const titleInputGroup = selectElement.closest('.dynamic-item-group').querySelector(`input[id="sectionTitle${index}"]`)?.closest('.form-group');
+
+        sectionContentDiv.innerHTML = ''; // Clear current content
+
+        if (titleInputGroup) {
+            if (newType === 'ctaBanner') {
+                titleInputGroup.style.display = 'none'; // Hide title for CTA banner
+            } else {
+                titleInputGroup.style.display = 'block'; // Show title for standard
+            }
+        }
 
         if (newType === 'standard') {
-            if (!typeTitleRow.querySelector('[data-key="title"]')) {
-                const titleElement = createFormElement('title', 'New Section', `${pathPrefix}.title`);
-                titleElement.classList.add('col-3-4');
-                typeTitleRow.appendChild(titleElement);
-            }
-            buildStandardSectionFields(sectionFieldset, {}, pathPrefix);
+            sectionContentDiv.innerHTML = `
+                <div class="form-group">
+                    <label>Paragraphs:</label>
+                    <div id="sectionParagraphsContainer${index}"></div>
+                    <div class="dynamic-item-controls">
+                        <button type="button" class="add-item" onclick="addParagraph('sectionParagraphsContainer${index}')">Add Paragraph</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>List Items:</label>
+                    <div id="sectionListItemsContainer${index}"></div>
+                    <div class="dynamic-item-controls">
+                        <button type="button" class="add-item" onclick="addParagraph('sectionListItemsContainer${index}')">Add List Item</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="sectionTestimonialQuote${index}">Testimonial Quote:</label>
+                    <textarea id="sectionTestimonialQuote${index}" name="sectionTestimonialQuote${index}"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="sectionImageSrc${index}">Image URL:</label>
+                    <input type="url" id="sectionImageSrc${index}" name="sectionImageSrc${index}">
+                </div>
+            `;
         } else if (newType === 'ctaBanner') {
-            const titleElement = typeTitleRow.querySelector('[data-key="title"]');
-            if (titleElement) titleElement.remove();
-            buildCtaBannerSectionFields(sectionFieldset, {}, pathPrefix);
+            sectionContentDiv.innerHTML = `
+                <div class="form-group">
+                    <label for="ctaBannerSubhead${index}">Subhead:</label>
+                    <input type="text" id="ctaBannerSubhead${index}" name="ctaBannerSubhead${index}">
+                </div>
+                <div class="form-group">
+                    <label for="ctaBannerHeadline${index}">Headline (HTML allowed):</label>
+                    <textarea id="ctaBannerHeadline${index}" name="ctaBannerHeadline${index}"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="ctaBannerSmallText${index}">Small Text:</label>
+                    <input type="text" id="ctaBannerSmallText${index}" name="ctaBannerSmallText${index}">
+                </div>
+            `;
         }
     }
 
-    function buildStandardSectionFields(fieldset, data, pathPrefix) {
-        fieldset.appendChild(createFormElement('paragraphs', data.paragraphs || [''], `${pathPrefix}.paragraphs`));
-        const optionalControlsContainer = document.createElement('div');
-        optionalControlsContainer.className = 'optional-controls-row';
-        const testimonialContainer = document.createElement('div');
-        testimonialContainer.className = 'optional-container';
-        optionalControlsContainer.appendChild(testimonialContainer);
-        updateOptionalButton(testimonialContainer, 'testimonial', data.testimonial, addTestimonialToSection, pathPrefix);
-        const imageContainer = document.createElement('div');
-        imageContainer.className = 'optional-container';
-        optionalControlsContainer.appendChild(imageContainer);
-        updateOptionalButton(imageContainer, 'image', data.image, addImageToSection, pathPrefix);
-        fieldset.appendChild(optionalControlsContainer);
-    }
+    // --- Populate Form Function ---
+    function populateForm() {
+        if (typeof config === 'undefined') { console.error("Config not loaded!"); return; }
+        const c = config;
 
-    function buildCtaBannerSectionFields(fieldset, data, pathPrefix) {
-        fieldset.appendChild(createFormElement('ctaBannerContent', data.ctaBannerContent || { subhead: '', headline: '', smallText: '' }, `${pathPrefix}.ctaBannerContent`));
-    }
-
-    function buildObjectEditor(obj, isNested = false, path) {
-        const fieldset = document.createElement('fieldset');
-        if (isNested) fieldset.className = 'nested-object';
-
-        const keys = Object.keys(obj);
-        keys.forEach(key => {
-            fieldset.appendChild(createFormElement(key, obj[key], `${path}.${key}`));
-        });
-        return fieldset;
-    }
-
-    function updateOptionalButton(container, key, data, addFunction, pathPrefix) {
-        container.innerHTML = '';
-        const newPath = `${pathPrefix}.${key}`;
-        if (data) {
-            const fields = createFormElement(key, data, newPath);
-            container.appendChild(fields);
-            const removeBtn = document.createElement('button');
-            removeBtn.type = 'button';
-            removeBtn.textContent = `Remove ${toHumanReadable(key)}`;
-            removeBtn.className = 'toggle-optional-btn remove-btn';
-            removeBtn.onclick = () => updateOptionalButton(container, key, null, addFunction, pathPrefix);
-            fields.appendChild(removeBtn);
-        } else {
-            const addBtn = document.createElement('button');
-            addBtn.type = 'button';
-            addBtn.textContent = `Add ${toHumanReadable(key)}`;
-            addBtn.className = 'toggle-optional-btn add-btn';
-            addBtn.onclick = () => addFunction(container, pathPrefix);
-            container.appendChild(addBtn);
+        // Globals Panel
+        setVal('globalCompanyName', c.globals?.companyName);
+        setVal('globalMainCTAButtonText', c.globals?.mainCTAButtonText);
+        setVal('globalMainCTAButtonURL', c.globals?.mainCTAButtonURL);
+        setVal('globalPrimaryColor', c.globals?.primaryColor);
+        document.getElementById('globalPrimaryColorPicker').value = c.globals?.primaryColor || '#e3c379';
+        setVal('globalAccentColor', c.globals?.accentColor);
+        document.getElementById('globalAccentColorPicker').value = c.globals?.accentColor || '#d9c6a2';
+        if (c.globals.agents && Array.isArray(c.globals.agents)) {
+            renderDynamicItems('agentsContainer', c.globals.agents, createAgentInputs);
         }
-    }
 
-    function addImageToSection(container, pathPrefix) {
-        updateOptionalButton(container, 'image', { src: '' }, addImageToSection, pathPrefix);
-    }
+        // Header Panel
+        setVal('headerTag', c.header?.tag);
+        setVal('headerTitle', c.header?.title);
+        setVal('headerSubheadline', c.header?.subheadline);
 
-    function addTestimonialToSection(container, pathPrefix) {
-        updateOptionalButton(container, 'testimonial', { quote: '' }, addTestimonialToSection, pathPrefix);
-    }
+        // Summary Panel (formerly part of Main Box)
+        setVal('mainBoxSummaryTitle', c.mainBox?.summary?.title);
+        setVal('mainBoxSummaryHeroImageSrc', c.mainBox?.summary?.heroImage?.src);
+        setVal('mainBoxSummarySubTitle', c.mainBox?.summary?.subTitle);
+        renderDynamicItems('mainBoxSummaryParagraphsContainer', c.mainBox?.summary?.paragraphs, (text, index) => createParagraphInput(text, 'mainBoxSummaryParagraphsContainer', index));
 
-    function buildArrayEditor(key, arr, path) {
-        const container = document.createElement('div');
-        const listContainer = document.createElement('div');
-        listContainer.className = 'array-list';
-        container.appendChild(listContainer);
-        const isStringArray = arr.every(item => typeof item === 'string');
-        if (isStringArray) {
-            arr.forEach((item, index) => listContainer.appendChild(createStringArrayItem(item, `${path}.${index}`)));
-        } else {
-            arr.forEach((item, index) => listContainer.appendChild(createObjectArrayItem(item, key, index, `${path}.${index}`)));
+        // Sidebar Panel (formerly part of Main Box)
+        setVal('mainBoxSidebarTitle', c.mainBox?.sidebar?.title);
+        setVal('mainBoxSidebarImageSrc', c.mainBox?.sidebar?.image?.src);
+        renderDynamicItems('mainBoxSidebarParagraphsContainer', c.mainBox?.sidebar?.paragraphs, (text, index) => createParagraphInput(text, 'mainBoxSidebarParagraphsContainer', index));
+
+        // Sections Panel
+        if (c.sections && Array.isArray(c.sections)) {
+            renderDynamicItems('sectionsContainer', c.sections, createSectionInputs);
         }
-        const addBtn = document.createElement('button');
-        addBtn.type = 'button';
-        addBtn.textContent = `+ Add New ${toHumanReadable(key.slice(0, -1))}`;
-        addBtn.className = 'add-btn';
-        addBtn.onclick = () => {
-            const newIndex = listContainer.children.length;
-            const newPath = `${path}.${newIndex}`;
-            if (isStringArray) {
-                listContainer.appendChild(createStringArrayItem('', newPath));
-            } else {
-                let newItemData = {};
-                if (key === 'sections') newItemData = { type: 'standard', title: 'New Section', paragraphs: [''] };
-                else if (key === 'agents') newItemData = { name: '', imageSrc: '', contactDetails: [{type: 'email', value: ''}] };
-                else if (key === 'contactDetails') newItemData = { type: 'email', value: '' };
-                else if (arr.length > 0) newItemData = JSON.parse(JSON.stringify(arr[0]));
-                
-                Object.keys(newItemData).forEach(k => {
-                    if (Array.isArray(newItemData[k])) newItemData[k] = [];
-                    else if (typeof newItemData[k] === 'object' && newItemData[k] !== null) Object.keys(newItemData[k]).forEach(subKey => newItemData[k][subKey] = '');
-                    else newItemData[k] = '';
-                });
-                listContainer.appendChild(createObjectArrayItem(newItemData, key, newIndex, newPath));
-            }
+
+        // Footer Panel
+        setVal('footerLogoSrc', c.footer?.logo?.src);
+        setVal('footerBrokerageLabel', c.footer?.brokerageLabel);
+        setVal('footerBrokerageName', c.footer?.brokerageName);
+        setVal('footerBrokerageAddress', c.footer?.brokerageAddress);
+        setVal('footerSecondaryLogoSrc', c.footer?.secondaryLogo?.src);
+        setVal('footerDisclaimerText', c.footer?.disclaimerText);
+        setVal('footerPrivacyPolicyText', c.footer?.privacyPolicy?.text);
+        setVal('footerPrivacyPolicyHref', c.footer?.privacyPolicy?.href);
+        // Agents in footer will be handled dynamically later
+    }
+
+    // --- Handle Form Submit Function ---
+    async function handleFormSubmit(event) {
+        event.preventDefault();
+        messageDiv.textContent = 'Saving...';
+        messageDiv.className = '';
+
+        const updatedConfig = {
+            globals: { agents: [] },
+            header: {},
+            mainBox: { summary: {}, sidebar: {} }, // Keep mainBox structure for config.js
+            sections: [],
+            footer: { privacyPolicy: {}, logo: {}, secondaryLogo: {} }
         };
-        container.appendChild(addBtn);
-        return container;
-    }
-
-    function createObjectArrayItem(itemData, key, index, path) {
-        const itemContainer = document.createElement('div');
-        itemContainer.className = 'array-item object-item';
-        if (key === 'sections') {
-            const header = document.createElement('h3');
-            header.className = 'array-item-header';
-            header.textContent = `Section ${index + 1}`;
-            itemContainer.appendChild(header);
-        }
-        const fieldset = buildObjectEditor(itemData, true, path);
-        itemContainer.appendChild(fieldset);
-        const controls = document.createElement('div');
-        controls.className = 'array-controls';
-        const removeBtn = document.createElement('button');
-        removeBtn.type = 'button';
-        removeBtn.innerHTML = '&times;';
-        removeBtn.title = `Remove ${toHumanReadable(key.slice(0, -1))}`;
-        removeBtn.className = 'remove-btn';
-        removeBtn.onclick = () => itemContainer.remove();
-        controls.appendChild(removeBtn);
-        itemContainer.appendChild(controls);
-        return itemContainer;
-    }
-
-    function createStringArrayItem(itemData, path) {
-        const itemContainer = document.createElement('div');
-        itemContainer.className = 'array-item string-item';
-        const textarea = document.createElement('textarea');
-        textarea.value = itemData;
-        textarea.rows = 3;
-        textarea.dataset.path = path;
-        itemContainer.appendChild(textarea);
-        const controls = document.createElement('div');
-        controls.className = 'array-controls';
-        const removeBtn = document.createElement('button');
-        removeBtn.type = 'button';
-        removeBtn.innerHTML = '&times;';
-        removeBtn.title = 'Remove Item';
-        removeBtn.className = 'remove-btn';
-        removeBtn.onclick = () => itemContainer.remove();
-        controls.appendChild(removeBtn);
-        itemContainer.appendChild(controls);
-        return itemContainer;
-    }
-
-    function buildForm(config, container) {
-        for (const key in config) {
-            container.appendChild(createFormElement(key, config[key], key));
-        }
-    }
-
-    buildForm(window.config, formContainer);
-
-    // ============================================================================================
-    // FORM PARSING AND CONFIG GENERATION (REWRITTEN)
-    // ============================================================================================
-    
-    function setValue(obj, path, value) {
-        const keys = path.split('.');
-        let current = obj;
-        for (let i = 0; i < keys.length - 1; i++) {
-            const key = keys[i];
-            const nextKey = keys[i + 1];
-            const isNextKeyNumeric = !isNaN(parseInt(nextKey, 10));
-            if (!current[key]) {
-                current[key] = isNextKeyNumeric ? [] : {};
-            }
-            current = current[key];
-        }
-        current[keys[keys.length - 1]] = value;
-    }
-
-    saveBtn.addEventListener('click', async () => {
-        saveBtn.disabled = true;
-        saveStatus.textContent = 'Saving...';
-        saveStatus.className = 'status-saving';
-
-        const newConfig = {};
-        const allInputs = formContainer.querySelectorAll('[data-path]');
-
-        allInputs.forEach(input => {
-            const path = input.dataset.path;
-            let value = input.value;
-            if (input.type === 'number') value = parseFloat(value);
-            setValue(newConfig, path, value);
-        });
-
-        // Merge githubConfig if it exists
-        if (window.githubConfig && window.githubConfig.repoName) {
-            newConfig.githubRepo = window.githubConfig.repoName;
-        }
 
         try {
-            const response = await fetch('https://n8n.salesgenius.co/webhook/casestudyupdate', {
+            // Globals Panel
+            updatedConfig.globals.companyName = getVal('globalCompanyName');
+            updatedConfig.globals.mainCTAButtonText = getVal('globalMainCTAButtonText');
+            updatedConfig.globals.mainCTAButtonURL = getVal('globalMainCTAButtonURL');
+            updatedConfig.globals.primaryColor = getVal('globalPrimaryColor');
+            updatedConfig.globals.accentColor = getVal('globalAccentColor');
+            // Collect agents dynamically
+            document.querySelectorAll('#agentsContainer .dynamic-item-group').forEach((group, index) => {
+                const name = group.querySelector(`#agentName${index}`)?.value;
+                const imageSrc = group.querySelector(`#agentImageSrc${index}`)?.value;
+                const contactDetails = [];
+                group.querySelectorAll(`.contact-detail-item`).forEach((contactGroup) => {
+                    const type = contactGroup.querySelector('select')?.value;
+                    const value = contactGroup.querySelector('input')?.value;
+                    if (type && value) {
+                        contactDetails.push({ type, value });
+                    }
+                });
+                if (name || imageSrc || contactDetails.length > 0) {
+                    updatedConfig.globals.agents.push({ name: name || '', imageSrc: imageSrc || '', contactDetails });
+                }
+            });
+
+
+            // Header Panel
+            updatedConfig.header.tag = getVal('headerTag');
+            updatedConfig.header.title = getVal('headerTitle');
+            updatedConfig.header.subheadline = getVal('headerSubheadline');
+
+            // Summary Panel (collect into mainBox.summary)
+            updatedConfig.mainBox.summary.title = getVal('mainBoxSummaryTitle');
+            updatedConfig.mainBox.summary.heroImage = { src: getVal('mainBoxSummaryHeroImageSrc') };
+            updatedConfig.mainBox.summary.subTitle = getVal('mainBoxSummarySubTitle');
+            updatedConfig.mainBox.summary.paragraphs = Array.from(document.querySelectorAll('#mainBoxSummaryParagraphsContainer .paragraph-item textarea')).map(textarea => textarea.value);
+
+            // Sidebar Panel (collect into mainBox.sidebar)
+            updatedConfig.mainBox.sidebar.title = getVal('mainBoxSidebarTitle');
+            updatedConfig.mainBox.sidebar.image = { src: getVal('mainBoxSidebarImageSrc') };
+            updatedConfig.mainBox.sidebar.paragraphs = Array.from(document.querySelectorAll('#mainBoxSidebarParagraphsContainer .paragraph-item textarea')).map(textarea => textarea.value);
+
+            // Sections Panel (collect dynamically)
+            document.querySelectorAll('#sectionsContainer > .dynamic-item-group').forEach((sectionGroup, sectionIndex) => {
+                const typeSelect = sectionGroup.querySelector(`#sectionType${sectionIndex}`);
+                const type = typeSelect ? typeSelect.value : 'standard';
+                let sectionData = { type };
+
+                if (type === 'standard') {
+                    sectionData.title = sectionGroup.querySelector(`#sectionTitle${sectionIndex}`)?.value || '';
+                    sectionData.paragraphs = Array.from(sectionGroup.querySelectorAll(`#sectionParagraphsContainer${sectionIndex} .paragraph-item textarea`)).map(textarea => textarea.value);
+                    const testimonialQuote = sectionGroup.querySelector(`#sectionTestimonialQuote${sectionIndex}`)?.value;
+                    if (testimonialQuote) {
+                        sectionData.testimonial = { quote: testimonialQuote };
+                    }
+                    const imageSrc = sectionGroup.querySelector(`#sectionImageSrc${sectionIndex}`)?.value;
+                    if (imageSrc) {
+                        sectionData.image = { src: imageSrc };
+                    }
+                    sectionData.listItems = Array.from(sectionGroup.querySelectorAll(`#sectionListItemsContainer${sectionIndex} .paragraph-item textarea`)).map(textarea => textarea.value);
+                } else if (type === 'ctaBanner') {
+                    sectionData.ctaBannerContent = {
+                        subhead: sectionGroup.querySelector(`#ctaBannerSubhead${sectionIndex}`)?.value || '',
+                        headline: sectionGroup.querySelector(`#ctaBannerHeadline${sectionIndex}`)?.value || '',
+                        smallText: sectionGroup.querySelector(`#ctaBannerSmallText${sectionIndex}`)?.value || ''
+                    };
+                }
+                updatedConfig.sections.push(sectionData);
+            });
+
+
+            // Footer Panel
+            updatedConfig.footer.logo.src = getVal('footerLogoSrc');
+            updatedConfig.footer.brokerageLabel = getVal('footerBrokerageLabel');
+            updatedConfig.footer.brokerageName = getVal('footerBrokerageName');
+            updatedConfig.footer.brokerageAddress = getVal('footerBrokerageAddress');
+            updatedConfig.footer.secondaryLogo.src = getVal('footerSecondaryLogoSrc');
+            updatedConfig.footer.disclaimerText = getVal('footerDisclaimerText');
+            updatedConfig.footer.privacyPolicy.text = getVal('footerPrivacyPolicyText');
+            updatedConfig.footer.privacyPolicy.href = getVal('footerPrivacyPolicyHref');
+            // Agents in footer will be collected dynamically later
+
+            // --- Webhook Submission (Placeholder for now) ---
+            const adminWebhookUrl = "https://n8n.salesgenius.co/webhook/casestudyupdate"; // Existing webhook URL
+            
+            const response = await fetch(adminWebhookUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(newConfig),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedConfig),
             });
 
             if (response.ok) {
-                saveStatus.textContent = '✅ Changes Saved Successfully!';
-                saveStatus.className = 'status-success';
+                messageDiv.textContent = 'Configuration saved successfully! Reload page to see changes reflected if n8n updated config.js.';
+                messageDiv.className = 'success';
             } else {
-                const errorText = await response.text();
-                throw new Error(`Webhook failed with status: ${response.status}. ${errorText}`);
+                const errorData = await response.text();
+                throw new Error(`Error saving configuration: ${response.status} ${errorData}`);
             }
         } catch (error) {
-            console.error('Error saving config:', error);
-            saveStatus.textContent = `❌ Error: Could not save changes. ${error.message}`;
-            saveStatus.className = 'status-error';
-        } finally {
-            setTimeout(() => {
-                saveBtn.disabled = false;
-                saveStatus.textContent = '';
-                saveStatus.className = '';
-            }, 4000);
+            console.error("Error during form submission:", error);
+            messageDiv.textContent = `Error: ${error.message}`;
+            messageDiv.className = 'error';
         }
-    });
+    }
+
+    // --- Side Navigation Logic ---
+    function initSideNav() {
+        const navLinks = document.querySelectorAll('#sideNav a');
+        const contentPanels = document.querySelectorAll('.content-panel');
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                navLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                const targetId = link.getAttribute('data-target');
+                contentPanels.forEach(panel => {
+                    panel.classList.toggle('active', panel.id === targetId);
+                });
+            });
+        });
+        if (navLinks.length > 0) { navLinks[0].click(); } // Activate first tab
+    }
+
+    // --- Initialization ---
+    function init() {
+        const password = prompt("Enter password to access admin page:", "");
+        if (password === "123456") { // Replace with a secure method if needed
+            if (typeof config === 'undefined') {
+                 alert("Error: Configuration file (config.js) failed to load. Cannot initialize admin page.");
+                 document.body.innerHTML = '<p style="color:red; text-align:center; margin-top: 50px; font-size:18px; width:100%;">Configuration Error</p>';
+                 return;
+            }
+            document.body.style.justifyContent = 'flex-start';
+            document.body.style.alignItems = 'flex-start';
+            adminLayout.classList.remove('hidden');
+            populateForm();
+            initSideNav();
+            configForm.addEventListener('submit', handleFormSubmit);
+
+            // Add event listeners for color pickers
+            document.getElementById('globalPrimaryColorPicker').addEventListener('input', (event) => {
+                document.getElementById('globalPrimaryColor').value = event.target.value;
+            });
+            document.getElementById('globalPrimaryColor').addEventListener('input', (event) => {
+                document.getElementById('globalPrimaryColorPicker').value = event.target.value;
+            });
+
+            document.getElementById('globalAccentColorPicker').addEventListener('input', (event) => {
+                document.getElementById('globalAccentColor').value = event.target.value;
+            });
+            document.getElementById('globalAccentColor').addEventListener('input', (event) => {
+                document.getElementById('globalAccentColorPicker').value = event.target.value;
+            });
+
+        } else {
+            alert("Incorrect password. Access denied.");
+            document.body.innerHTML = '<p style="color:red; text-align:center; margin-top: 50px; font-size:18px; width:100%;">Access Denied</p>';
+        }
+    }
+
+    init();
 });

@@ -3,29 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Case Study Admin</title>
+    <title>Case Study Admin Configuration</title>
     <link rel="stylesheet" href="admin.css">
 </head>
 <body>
+    <div class="admin-layout hidden" id="adminLayout">
+        <nav id="sideNav">
+            <ul>
+                <li><a href="#" data-target="globalsPanel" class="active">Global Settings</a></li>
+                <li><a href="#" data-target="headerPanel">Header</a></li>
+                <li><a href="#" data-target="summaryPanel">Summary</a></li>
+                <li><a href="#" data-target="sidebarPanel">Sidebar</a></li>
+                <li><a href="#" data-target="sectionsPanel">Content Sections</a></li>
+                <li><a href="#" data-target="footerPanel">Footer</a></li>
+            </ul>
+        </nav>
+        <main id="contentPanels">
+            <h1>Case Study Admin Configuration</h1>
+            <form id="configForm">
+                <div class="content-panel-container">
+                    <!-- 1. Global Settings Panel -->
+                    <div id="globalsPanel" class="content-panel active">
+                        <h2>Global Settings</h2>
+                        <p class="panel-description">Configure site-wide settings like company name, main call-to-action, and primary colors.</p>
+                        <div class="form-group">
+                            <label for="globalCompanyName">Company Name:</label>
+                            <input type="text" id="globalCompanyName" name="globalCompanyName">
+                        </div>
+                        <div class="form-group">
+                            <label for="globalMainCTAButtonText">Main CTA Button Text:</label>
+                            <input type="text" id="globalMainCTAButtonText" name="globalMainCTAButtonText">
+                        </div>
+                        <div class="form-group">
+                            <label for="globalMainCTAButtonURL">Main CTA Button URL:</label>
+                            <input type="url" id="globalMainCTAButtonURL" name="globalMainCTAButtonURL">
+                        </div>
+                        <div class="form-group">
+                            <label for="globalPrimaryColor">Primary Color:</label>
+                            <input type="color" id="globalPrimaryColorPicker" value="#e3c379">
+                            <input type="text" id="globalPrimaryColor" name="globalPrimaryColor">
+                        </div>
+                        <div class="form-group">
+                            <label for="globalAccentColor">Accent Color:</label>
+                            <input type="color" id="globalAccentColorPicker" value="#d9c6a2">
+                            <input type="text" id="globalAccentColor" name="globalAccentColor">
+                        </div>
+                        <fieldset>
+                            <legend>Agents</legend>
+                            <div id="agentsContainer">
+                                <!-- Agents will be dynamically added here by admin.js -->
+                            </div>
+                            <div class="dynamic-item-controls">
+                                <button type="button" class="add-item" onclick="addAgent()">Add Agent</button>
+                            </div>
+                        </fieldset>
+                    </div>
 
-    <header>
-        <h1>Case Study Content Editor</h1>
-        <p>Use this page to edit the content of the case study. When you are finished, click "Save Changes" at the bottom of the page.</p>
-    </header>
+                    <!-- 2. Header Panel -->
+                    <div id="headerPanel" class="content-panel">
+                        <h2>Header</h2>
+                        <p class="panel-description">Manage the content displayed in the main header section of the page.</p>
+                        <div class="form-group">
+                            <label for="headerTag">Tag:</label>
+                            <input type="text" id="headerTag" name="headerTag">
+                        </div>
+                        <div class="form-group">
+                            <label for="headerTitle">Title:</label>
+                            <input type="text" id="headerTitle" name="headerTitle">
+                        </div>
+                        <div class="form-group">
+                            <label for="headerSubheadline">Subheadline (HTML allowed):</label>
+                            <textarea id="headerSubheadline" name="headerSubheadline"></textarea>
+                        </div>
+                    </div>
 
-    <main>
-        <form id="config-form">
-            <!-- The form will be dynamically generated here by admin.js -->
-        </form>
-    </main>
+                    <!-- 3. Summary Panel -->
+                    <div id="summaryPanel" class="content-panel">
+                        <h2>Summary (Left Column)</h2>
+                        <p class="panel-description">Edit the content for the main summary section.</p>
+                        <div class="form-group">
+                            <label for="mainBoxSummaryTitle">Title:</label>
+                            <input type="text" id="mainBoxSummaryTitle" name="mainBoxSummaryTitle">
+                        </div>
+                        <div class="form-group">
+                            <label for="mainBoxSummaryHeroImageSrc">Hero Image URL:</label>
+                            <input type="url" id="mainBoxSummaryHeroImageSrc" name="mainBoxSummaryHeroImageSrc">
+                        </div>
+                        <div class="form-group">
+                            <label for="mainBoxSummarySubTitle">Subtitle:</label>
+                            <input type="text" id="mainBoxSummarySubTitle" name="mainBoxSummarySubTitle">
+                        </div>
+                        <div class="form-group">
+                            <label>Paragraphs:</label>
+                            <div id="mainBoxSummaryParagraphsContainer">
+                                <!-- Paragraphs will be dynamically added here -->
+                            </div>
+                            <div class="dynamic-item-controls">
+                                <button type="button" class="add-item" onclick="addParagraph('mainBoxSummaryParagraphsContainer')">Add Paragraph</button>
+                            </div>
+                        </div>
+                    </div>
 
-    <footer>
-        <button id="save-changes-btn">Save Changes</button>
-        <div id="save-status"></div>
-    </footer>
+                    <!-- 4. Sidebar Panel -->
+                    <div id="sidebarPanel" class="content-panel">
+                        <h2>Sidebar (Right Column)</h2>
+                        <p class="panel-description">Edit the content for the sidebar section.</p>
+                        <div class="form-group">
+                            <label for="mainBoxSidebarTitle">Title:</label>
+                            <input type="text" id="mainBoxSidebarTitle" name="mainBoxSidebarTitle">
+                        </div>
+                        <div class="form-group">
+                            <label for="mainBoxSidebarImageSrc">Image URL:</label>
+                            <input type="url" id="mainBoxSidebarImageSrc" name="mainBoxSidebarImageSrc">
+                        </div>
+                        <div class="form-group">
+                            <label>Paragraphs:</label>
+                            <div id="mainBoxSidebarParagraphsContainer">
+                                <!-- Paragraphs will be dynamically added here -->
+                            </div>
+                            <div class="dynamic-item-controls">
+                                <button type="button" class="add-item" onclick="addParagraph('mainBoxSidebarParagraphsContainer')">Add Paragraph</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5. Content Sections Panel -->
+                    <div id="sectionsPanel" class="content-panel">
+                        <h2>Content Sections</h2>
+                        <p class="panel-description">Add, remove, and reorder the various content sections of the page.</p>
+                        <div id="sectionsContainer">
+                            <!-- Sections will be dynamically added here by admin.js -->
+                        </div>
+                        <div class="dynamic-item-controls">
+                            <button type="button" class="add-item" onclick="addSection()">Add New Section</button>
+                        </div>
+                    </div>
+
+                    <!-- 6. Footer Panel -->
+                    <div id="footerPanel" class="content-panel">
+                        <h2>Footer</h2>
+                        <p class="panel-description">Configure the content displayed in the footer section of the page.</p>
+                        <div class="form-group">
+                            <label for="footerLogoSrc">Main Logo URL:</label>
+                            <input type="url" id="footerLogoSrc" name="footerLogoSrc">
+                        </div>
+                        <div class="form-group">
+                            <label for="footerBrokerageLabel">Brokerage Label:</label>
+                            <input type="text" id="footerBrokerageLabel" name="footerBrokerageLabel">
+                        </div>
+                        <div class="form-group">
+                            <label for="footerBrokerageName">Brokerage Name:</label>
+                            <input type="text" id="footerBrokerageName" name="footerBrokerageName">
+                        </div>
+                        <div class="form-group">
+                            <label for="footerBrokerageAddress">Brokerage Address:</label>
+                            <input type="text" id="footerBrokerageAddress" name="footerBrokerageAddress">
+                        </div>
+                        <div class="form-group">
+                            <label for="footerSecondaryLogoSrc">Secondary Logo URL:</label>
+                            <input type="url" id="footerSecondaryLogoSrc" name="footerSecondaryLogoSrc">
+                        </div>
+                        <div class="form-group">
+                            <label for="footerDisclaimerText">Disclaimer Text (HTML allowed):</label>
+                            <textarea id="footerDisclaimerText" name="footerDisclaimerText"></textarea>
+                        </div>
+                        <fieldset>
+                            <legend>Privacy Policy</legend>
+                            <div class="form-group">
+                                <label for="footerPrivacyPolicyText">Text:</label>
+                                <input type="text" id="footerPrivacyPolicyText" name="footerPrivacyPolicyText">
+                            </div>
+                            <div class="form-group">
+                                <label for="footerPrivacyPolicyHref">Link URL:</label>
+                                <input type="url" id="footerPrivacyPolicyHref" name="footerPrivacyPolicyHref">
+                            </div>
+                        </fieldset>
+                    </div>
+                </div>
+
+                <div class="save-area">
+                    <button type="submit">Save Configuration</button>
+                    <div id="message"></div>
+                </div>
+            </form>
+        </main>
+    </div>
 
     <script src="config.js"></script>
-    <script src="github.js"></script>
     <script src="admin.js"></script>
 </body>
 </html>
