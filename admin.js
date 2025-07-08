@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function removeDynamicItem(buttonElement) {
+    window.removeDynamicItem = function(buttonElement) {
         const itemGroup = buttonElement.closest('.dynamic-item-group');
         if (itemGroup) {
             itemGroup.remove();
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return div;
     }
 
-    function addContactDetail(buttonElement, agentIndex) {
+    window.addContactDetail = function(buttonElement, agentIndex) {
         const container = buttonElement.closest('fieldset').querySelector(`#agentContactDetailsContainer${agentIndex}`);
         if (container) {
             const newDetailElement = createContactDetailInputs({ type: 'email', value: '' }, agentIndex, container.children.length);
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return div;
     }
 
-    function addAgent() {
+    window.addAgent = function() {
         addDynamicItem('agentsContainer', { name: '', imageSrc: '', contactDetails: [{ type: 'email', value: '' }] }, createAgentInputs);
     }
 
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return div;
     }
 
-    function addParagraph(containerId) {
+    window.addParagraph = function(containerId) {
         addDynamicItem(containerId, '', (text, index) => createParagraphInput(text, containerId, index));
     }
 
@@ -214,11 +214,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return div;
     }
 
-    function addSection() {
+    window.addSection = function() {
         addDynamicItem('sectionsContainer', { type: 'standard', title: '', paragraphs: [''] }, createSectionInputs);
     }
 
-    function handleSectionTypeChange(selectElement, index) {
+    window.handleSectionTypeChange = function(selectElement, index) {
         const newType = selectElement.value;
         const sectionContentDiv = document.getElementById(`sectionContent${index}`);
         const titleInputGroup = selectElement.closest('.dynamic-item-group').querySelector(`input[id="sectionTitle${index}"]`)?.closest('.form-group');
@@ -283,6 +283,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Globals Panel
         setVal('globalCompanyName', c.globals?.companyName);
+        if (window.githubConfig) {
+            setVal('githubRepoName', window.githubConfig.repoName);
+        }
         setVal('globalMainCTAButtonText', c.globals?.mainCTAButtonText);
         setVal('globalMainCTAButtonURL', c.globals?.mainCTAButtonURL);
         setVal('globalPrimaryColor', c.globals?.primaryColor);
@@ -347,6 +350,10 @@ document.addEventListener('DOMContentLoaded', () => {
             updatedConfig.globals.mainCTAButtonURL = getVal('globalMainCTAButtonURL');
             updatedConfig.globals.primaryColor = getVal('globalPrimaryColor');
             updatedConfig.globals.accentColor = getVal('globalAccentColor');
+
+            // GitHub Repo
+            updatedConfig.githubRepo = getVal('githubRepoName');
+            
             // Collect agents dynamically
             document.querySelectorAll('#agentsContainer .dynamic-item-group').forEach((group, index) => {
                 const name = group.querySelector(`#agentName${index}`)?.value;
@@ -479,9 +486,10 @@ document.addEventListener('DOMContentLoaded', () => {
             initSideNav();
             configForm.addEventListener('submit', handleFormSubmit);
 
-            // Add event listeners for color pickers
-            document.getElementById('globalPrimaryColorPicker').addEventListener('input', (event) => {
-                document.getElementById('globalPrimaryColor').value = event.target.value;
+ 
+             // Add event listeners for color pickers
+             document.getElementById('globalPrimaryColorPicker').addEventListener('input', (event) => {
+                 document.getElementById('globalPrimaryColor').value = event.target.value;
             });
             document.getElementById('globalPrimaryColor').addEventListener('input', (event) => {
                 document.getElementById('globalPrimaryColorPicker').value = event.target.value;
