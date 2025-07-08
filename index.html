@@ -214,8 +214,8 @@
       width: 100%;
       border-radius: 12px;
       margin-bottom: 1.7em;
-      object-fit: cover;
-      max-height: 270px;
+      object-fit: contain;
+      max-height: none;
     }
     .main-content h2 { 
       font-family: 'Montserrat', Arial, sans-serif;
@@ -645,6 +645,18 @@
       .footer-brokerage-info { font-size: 0.8em; }
       .footer-column-agents { font-size: 0.75em; }
       .footer-bottom-bar { font-size: 0.7rem; }
+    }
+
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 2rem;
+      }
+      .subheadline {
+        font-size: 1.8rem;
+      }
+      .main-content h2:first-of-type {
+        display: none !important;
+      }
     }
     /* Optional: subtle divider */
     .divider {
