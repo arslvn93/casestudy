@@ -75,10 +75,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.addContactDetail = function(buttonElement, agentIndex) {
-        const container = buttonElement.closest('fieldset').querySelector(`#agentContactDetailsContainer${agentIndex}`);
-        if (container) {
-            const newDetailElement = createContactDetailInputs({ type: 'email', value: '' }, agentIndex, container.children.length);
-            container.appendChild(newDetailElement);
+        // Find the agent container by looking for the closest agent group
+        const agentGroup = buttonElement.closest('.dynamic-item-group');
+        if (agentGroup) {
+            const nameInput = agentGroup.querySelector('input[id^="agentName"]');
+            if (nameInput) {
+                const match = nameInput.id.match(/agentName(\d+)/);
+                if (match) {
+                    const actualAgentIndex = parseInt(match[1]);
+                    const container = agentGroup.querySelector(`#agentContactDetailsContainer${actualAgentIndex}`);
+                    if (container) {
+                        const newDetailElement = createContactDetailInputs({ type: 'email', value: '' }, actualAgentIndex, container.children.length);
+                        container.appendChild(newDetailElement);
+                    }
+                }
+            }
         }
     }
 
@@ -112,7 +123,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.addAgent = function() {
-        addDynamicItem('agentsContainer', { name: '', imageSrc: '', contactDetails: [{ type: 'email', value: '' }] }, createAgentInputs);
+        const container = document.getElementById('agentsContainer');
+        if (container) {
+            // Find the highest existing agent index and add 1
+            let maxIndex = -1;
+            container.querySelectorAll('.dynamic-item-group').forEach(group => {
+                const nameInput = group.querySelector('input[id^="agentName"]');
+                if (nameInput) {
+                    const match = nameInput.id.match(/agentName(\d+)/);
+                    if (match) {
+                        const index = parseInt(match[1]);
+                        if (index > maxIndex) maxIndex = index;
+                    }
+                }
+            });
+            const newIndex = maxIndex + 1;
+            
+            const newAgentElement = createAgentInputs({ name: '', imageSrc: '', contactDetails: [{ type: 'email', value: '' }] }, newIndex);
+            container.appendChild(newAgentElement);
+        }
     }
 
     // Generic Paragraph/List Item
@@ -356,16 +385,26 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Collect agents dynamically
             document.querySelectorAll('#agentsContainer .dynamic-item-group').forEach((group, index) => {
-                const name = group.querySelector(`#agentName${index}`)?.value;
-                const imageSrc = group.querySelector(`#agentImageSrc${index}`)?.value;
+                // Find the agent name and image inputs within this group
+                const nameInput = group.querySelector('input[id^="agentName"]');
+                const imageInput = group.querySelector('input[id^="agentImageSrc"]');
+                
+                const name = nameInput?.value || '';
+                const imageSrc = imageInput?.value || '';
+                
                 const contactDetails = [];
                 group.querySelectorAll(`.contact-detail-item`).forEach((contactGroup) => {
-                    const type = contactGroup.querySelector('select')?.value;
-                    const value = contactGroup.querySelector('input')?.value;
+                    const typeSelect = contactGroup.querySelector('select');
+                    const valueInput = contactGroup.querySelector('input[type="text"]');
+                    
+                    const type = typeSelect?.value;
+                    const value = valueInput?.value;
+                    
                     if (type && value) {
                         contactDetails.push({ type, value });
                     }
                 });
+                
                 if (name || imageSrc || contactDetails.length > 0) {
                     updatedConfig.globals.agents.push({ name: name || '', imageSrc: imageSrc || '', contactDetails });
                 }
