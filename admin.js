@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="form-group">
                 <label for="agentImageSrc${index}">Image URL:</label>
-                <input type="url" id="agentImageSrc${index}" name="agentImageSrc${index}" value="${agent.imageSrc || ''}">
+                <input type="text" id="agentImageSrc${index}" name="agentImageSrc${index}" value="${agent.imageSrc || ''}" placeholder="https://example.com/agent-photo.jpg">
             </div>
             <fieldset>
                 <legend>Contact Details</legend>
@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="form-group">
                     <label for="sectionImageSrc${index}">Image URL:</label>
-                    <input type="url" id="sectionImageSrc${index}" name="sectionImageSrc${index}" value="${section.image?.src || ''}">
+                    <input type="text" id="sectionImageSrc${index}" name="sectionImageSrc${index}" value="${section.image?.src || ''}" placeholder="https://example.com/section-image.jpg">
                 </div>
             `;
         } else if (section.type === 'ctaBanner') {
@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="form-group">
                     <label for="sectionImageSrc${index}">Image URL:</label>
-                    <input type="url" id="sectionImageSrc${index}" name="sectionImageSrc${index}">
+                    <input type="text" id="sectionImageSrc${index}" name="sectionImageSrc${index}" placeholder="https://example.com/section-image.jpg">
                 </div>
             `;
         } else if (newType === 'ctaBanner') {
@@ -321,6 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('globalPrimaryColorPicker').value = c.globals?.primaryColor || '#e3c379';
         setVal('globalAccentColor', c.globals?.accentColor);
         document.getElementById('globalAccentColorPicker').value = c.globals?.accentColor || '#d9c6a2';
+        setVal('globalFacebookPixelId', c.globals?.facebookPixelId);
         if (c.globals.agents && Array.isArray(c.globals.agents)) {
             renderDynamicItems('agentsContainer', c.globals.agents, createAgentInputs);
         }
@@ -379,6 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updatedConfig.globals.mainCTAButtonURL = getVal('globalMainCTAButtonURL');
             updatedConfig.globals.primaryColor = getVal('globalPrimaryColor');
             updatedConfig.globals.accentColor = getVal('globalAccentColor');
+            updatedConfig.globals.facebookPixelId = getVal('globalFacebookPixelId');
 
             // GitHub Repo
             updatedConfig.githubRepo = getVal('githubRepoName');
@@ -405,8 +407,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
                 
-                if (name || imageSrc || contactDetails.length > 0) {
-                    updatedConfig.globals.agents.push({ name: name || '', imageSrc: imageSrc || '', contactDetails });
+                // Always add agent if they have a name, even if other fields are empty
+                if (name.trim() !== '') {
+                    updatedConfig.globals.agents.push({ name: name.trim(), imageSrc: imageSrc || '', contactDetails });
                 }
             });
 

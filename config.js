@@ -28,6 +28,9 @@ const config = {
     // This value is applied to the `--accent` CSS variable.
     accentColor: "#d9c6a2",
 
+    // Facebook Pixel ID for tracking. Leave empty to disable Facebook tracking.
+    facebookPixelId: "1074316633770404",
+
     // A list of agent objects. This data is used to build the contact cards in the sidebar and footer.
     // You can add or remove agents from this list.
     agents: [

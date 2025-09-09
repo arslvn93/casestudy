@@ -251,7 +251,48 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
   }
 
+  // Function to inject Facebook Pixel code
+  function injectFacebookPixel() {
+    if (globals && globals.facebookPixelId && globals.facebookPixelId.trim() !== '') {
+      const pixelId = globals.facebookPixelId.trim();
+      
+      // Create and inject the Facebook Pixel base code
+      const pixelCode = `
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '${pixelId}');
+        fbq('track', 'PageView');
+      `;
+      
+      // Create script element
+      const script = document.createElement('script');
+      script.innerHTML = pixelCode;
+      document.head.appendChild(script);
+      
+      // Add noscript fallback
+      const noscript = document.createElement('noscript');
+      noscript.innerHTML = `<img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${pixelId}&ev=PageView&noscript=1" />`;
+      document.head.appendChild(noscript);
+      
+      console.log('Facebook Pixel initialized with ID:', pixelId);
+      
+      // Add event tracking for CTA button clicks
+      document.addEventListener('click', function(event) {
+        if (event.target.matches('.discovery-btn, .summary-btn, .cta-banner-btn')) {
+          fbq('track', 'Lead');
+        }
+      });
+    }
+  }
+
   // --- Initialize Page ---
+  injectFacebookPixel(); // Inject Facebook Pixel first
   if (header) renderHeader(header);
   if (mainBox) renderMainBox(mainBox);
   if (sections) renderSections(sections);
